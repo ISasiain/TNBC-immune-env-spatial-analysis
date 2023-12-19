@@ -48,6 +48,46 @@ library(lme4)
 
 
 #
+# Defining functions to generat new metrics
+#
+
+cell_density_in_neighborhood <- function(spe_object, reference_cell, target_cell, radius) {
+  
+  # Combine cell ids, phenotypes, and coordinates of cells in a single data frame
+  spatial_data <- cbind(J10_B1@colData[, c("Cell.ID", "Phenotype")], spatialCoords(J10_B1))
+  
+  # Filter the data frame to keep only the cells belonging to the reference and target phenotypes 
+  reference <- spatial_data[spatial_data$Phenotype == reference_cell, ]
+  target <- spatial_data[spatial_data$Phenotype == target_cell, ]
+  
+  # Raise an error if the phenotypes selected do not exist in the data   
+  if (nrow(reference) == 0) {stop("The reference phenotype selected does not exist.")}
+  if (nrow(target) == 0) {stop("The target phenotype selected does not exist.")}
+  
+  # Calculate number of cells in the neighborhood and append them to a named vector
+  ncells_in_n <- sapply(1:nrow(reference), function(i) {
+    
+    ref_cell <- reference[i, ]  # Access each reference cell row-wise
+    
+    target$"Distance" <-
+      (target$Cell.X.Position - ref_cell$Cell.X.Position)^2 + 
+      (target$Cell.Y.Position - ref_cell$Cell.Y.Position)^2
+    
+    #Returning the points within the selected radius
+    return(sum(target$"Distance" <= radius^2))
+    
+  })
+  
+  #Eliminate 1 cell (the reference) if the target and reference cells are the same
+  if (target_cell == reference_cell) {ncells_in_n <- ncells_in_n -1}
+  
+  #Add names to vector
+  names(ncells_in_n) <- reference$Cell.ID
+  return(ncells_in_n / (pi*radius^2))
+}
+
+
+#
 # DEFINING PARAMETERS 
 #
 
@@ -120,6 +160,14 @@ for (marker_ref in markers1) {
               target_celltype = target_markers, 
               feature_colname = "Cell.Type", 
               radius = 100),
+
+            # Density in the neighborhood.
+            "DIN" = cell_density_in_neighborhood(
+              spe_object=sample, 
+              reference_cell=reference_markers,
+              target_cell=target_markers,
+              radius=100
+            ),
             
             # Area under curve of the K cross function
             "AUC" = calculate_cross_functions(sample, 
