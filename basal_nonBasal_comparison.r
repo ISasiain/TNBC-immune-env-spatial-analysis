@@ -170,12 +170,9 @@ ggplot(data=to_plot,
     theme_classic()
   
 
-#
-# COMPARING CELL COUNTS
-#
-  
 
-## Basal TNBC samples
+
+## Reading metrics
   
   reference_phen <- c("CD3", "CD8", "CD20", "p53", "FOXP3", "CD68", "CD4")
   target_phen <- c("CD3", "CD8", "CD20", "p53", "FOXP3", "CD68", "CD4")
@@ -183,8 +180,9 @@ ggplot(data=to_plot,
   path_to_metrics <- "/home/Illumina/Iñaki_Sasiain/immune_spatial/spatial_metrics/"
   
   list_of_metrics <- list()
-  
-  
+
+
+
   #Store the metrics of the markers of interest in a list
   for (marker1 in reference_phen) {
     for (marker2 in target_phen[!target_phen == marker1]) {
@@ -195,8 +193,13 @@ ggplot(data=to_plot,
     }
   }
   
+
+
+#
+# COMPARING CELL COUNTS
+#
   
-  # Generate a heatmap with the log(cell_counts) of the reference marker
+  ## Basal TNBC samples
   
   #Defining rows and columns of the heat map, not of the heatmap_data matrix!
   markers <- reference_phen
@@ -346,25 +349,7 @@ dev.off()
 
 
 ## Non-Basal TNBC samples
-  
-  reference_phen <- c("CD3", "CD8", "CD20", "p53", "FOXP3", "CD68", "CD4")
-  target_phen <- c("CD3", "CD8", "CD20", "p53", "FOXP3", "CD68", "CD4")
-  
-  path_to_metrics <- "/home/Illumina/Iñaki_Sasiain/immune_spatial/spatial_metrics/"
-  
-  list_of_metrics <- list()
-  
-  
-  #Store the metrics of the markers of interest in a list
-  for (marker1 in reference_phen) {
-    for (marker2 in target_phen[!target_phen == marker1]) {
-      path_to_file <- paste0(path_to_metrics,  marker1, "_", marker2, "_spatial_stats.RData")
-
-      list_of_metrics[[paste(marker1, marker2, sep="_")]] <- readRDS(path_to_file)
-      
-    }
-  }
-  
+    
   
   # Generate a heatmap with the log(cell_counts) of the reference marker
   
@@ -515,30 +500,7 @@ dev.off()
 # COMPARING CELL DISTANCES
 #
 
-# PAM50 Basal samples
-
-reference_phen <- c("CD3", "CD8", "CD20", "p53", "FOXP3", "CD68", "CD4")
-  target_phen <- c("CD3", "CD8", "CD20", "p53", "FOXP3", "CD68", "CD4")
-  
-  path_to_metrics <- "/home/Illumina/Iñaki_Sasiain/immune_spatial/spatial_metrics/"
-  
-  list_of_metrics <- list()
-  
-  
-  #Store the metrics of the markers of interest in a list
-  for (marker1 in reference_phen) {
-    for (marker2 in target_phen[!target_phen == marker1]) {
-      path_to_file <- paste0(path_to_metrics,  marker1, "_", marker2, "_spatial_stats.RData")
-
-      list_of_metrics[[paste(marker1, marker2, sep="_")]] <- readRDS(path_to_file)
-      
-    }
-  }
-  
-  
-  # Generate a data frame to store distances between cells
-
-  #Determine possible combinations of markers
+  #Determine possible combinations of markers and getting AMD matrix
 
   marker_permutations <- permutations(reference_phen, r=2, n=length(reference_phen))
   marker_permutations <- sapply(1:nrow(marker_permutations), function(row) paste(marker_permutations[row,], collapse="_"))
@@ -569,7 +531,7 @@ for (marker in marker_permutations) {
 
     for(group in groups) {
 
-      #Generate median cell count for each subtype analysed using switch()
+      #Generate median cell count for each subtype analysed
       heatmap_data[group, marker] <- 
 
 
@@ -746,3 +708,428 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_distances.chang
             )
 
   dev.off()
+
+
+#
+# COMPARING DENSITY IN THE NEIGHBORHOOD
+#
+
+## PAM50 Basal samples
+
+# Generate matrix with Mean of median Density in the Neighborhood values
+
+  #Determine possible combinations of markers and getting DIN matrix
+
+  marker_permutations <- permutations(reference_phen, r=2, n=length(reference_phen))
+  marker_permutations <- sapply(1:nrow(marker_permutations), function(row) paste(marker_permutations[row,], collapse="_"))
+
+  groups <- c("Total", "Basal", "Basal-IM+", "Basal-IM-", "Basal-HRD: high", "Basal-HRD: low/inter")
+  
+  heatmap_data <- matrix(NA, 
+                         ncol = length(marker_permutations),
+                         nrow = length(groups))
+
+  
+  for (marker in marker_permutations) {
+    
+   DIN <- unlist(sapply(list_of_metrics[[marker]], 
+                             function(my_metrics) {
+                              tryCatch(
+                                {median(my_metrics[["DIN"]])},
+                                error = function(e) {NA}
+                              )
+                            }
+            ))
+
+
+    for(group in groups) {
+
+      #Generate median cell count for each subtype analysed
+      heatmap_data[group, marker] <- 
+
+
+        if (group=="Total") { 
+          median(na.omit(DIN))
+          
+        } else if (group=="Basal") { 
+            filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "Basal")
+            median(na.omit(DIN[filter]))
+            
+        } else if (group=="Basal-IM+") {
+        
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "Basal" &
+                     annotation[names(DIN), "TNBCtype_IMpositive"] == "1")
+          median(na.omit(DIN[filter]))
+          
+        } else if (group == "Basal-IM-") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "Basal" &
+                     annotation[names(DIN), "TNBCtype_IMpositive"] == "0")
+          median(na.omit(DIN[filter]))
+        
+        } else if (group == "Basal-HRD: high") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "Basal" &
+                     annotation[names(DIN), "HRD.2.status"] == "high")
+          median(na.omit(DIN[filter]))
+        
+        } else if (group == "Basal-HRD: low/inter") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "Basal" &
+                     annotation[names(DIN), "HRD.2.status"] == "low/inter")
+          median(na.omit(DIN[filter]))}
+    }  
+  }
+
+  # Generating and saving plots
+
+png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_DIN_with_p53.png")
+
+    Heatmap(heatmap_data,
+            col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("blue", "red")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="DIN (cells/U²)")
+            )
+
+  dev.off()
+
+change_heatmap_data <- t(apply(heatmap_data, 
+                            1,
+                            FUN = function(row) {
+                              row / heatmap_data["Total", ]
+                            }))
+
+png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_DIN.change_with_p53.png")
+
+    Heatmap(change_heatmap_data,
+            col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("blue", "white", "red")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Change in DIN")
+            )
+
+  dev.off()
+
+
+## PAM50 Non Basal samples
+
+
+  marker_permutations <- permutations(reference_phen, r=2, n=length(reference_phen))
+  marker_permutations <- sapply(1:nrow(marker_permutations), function(row) paste(marker_permutations[row,], collapse="_"))
+
+  groups <- c("Total", "Non Basal", "Non Basal-IM+", "Non Basal-IM-", "Non Basal-LAR", "Non Basal-non LAR")
+  
+  heatmap_data <- matrix(NA, 
+                         ncol = length(marker_permutations),
+                         nrow = length(groups))
+  
+  #Defining colnames of the heatmap_data matrix
+  colnames(heatmap_data) <- marker_permutations
+  rownames(heatmap_data) <- groups
+
+
+for (marker in marker_permutations) {
+    
+    #Generating a named vector with the cell counts of interest
+    DIN <- unlist(sapply(list_of_metrics[[marker]], 
+                             function(my_metrics) {
+                              tryCatch(
+                                {median(my_metrics[["DIN"]])},
+                                error = function(e) {NA}
+                              )
+                            }
+            ))
+
+
+    for(group in groups) {
+
+      #Generate median cell count for each subtype analysed
+      heatmap_data[group, marker] <- 
+
+
+        if (group=="Total") { 
+          median(na.omit(DIN))
+          
+        } else if (group=="Non Basal") { 
+            filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal")
+            median(na.omit(DIN[filter]))
+            
+        } else if (group=="Non Basal-IM+") {
+        
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal" &
+                     annotation[names(DIN), "TNBCtype_IMpositive"] == "1")
+          median(na.omit(DIN[filter]))
+          
+        } else if (group == "Non Basal-IM-") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal" &
+                     annotation[names(DIN), "TNBCtype_IMpositive"] == "0")
+          median(na.omit(DIN[filter]))
+        
+        } else if (group == "Non Basal-LAR") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal" &
+                     annotation[names(DIN), "LAR_nonLAR"] == "LAR")
+          median(na.omit(DIN[filter]))
+        
+        } else if (group == "Non Basal-non LAR") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal" &
+                     annotation[names(DIN), "LAR_nonLAR"] == "nonLAR")
+          median(na.omit(DIN[filter]))}
+    }  
+  }
+
+
+png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_DIN_with_p53.png")
+
+    Heatmap(heatmap_data,
+            col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("blue", "red")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="DIN (cells/U²)")
+            )
+
+  dev.off()
+
+change_heatmap_data <- t(apply(heatmap_data, 
+                            1,
+                            FUN = function(row) {
+                              row / heatmap_data["Total", ]
+                            }))
+
+png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_DIN.change_with_p53.png")
+
+    Heatmap(change_heatmap_data,
+            col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("blue", "white", "red")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Change in DIN")
+            )
+
+  dev.off()
+
+
+
+#
+# COMPARING ATTRACTION
+#
+
+
+## PAM50 Basal samples
+
+# Generate matrix with median of attraction values
+
+  #Determine possible combinations of markers and getting DIN matrix
+
+  marker_permutations <- permutations(reference_phen, r=2, n=length(reference_phen))
+  marker_permutations <- sapply(1:nrow(marker_permutations), function(row) paste(marker_permutations[row,], collapse="_"))
+
+  groups <- c("Total", "Basal", "Basal-IM+", "Basal-IM-", "Basal-HRD: high", "Basal-HRD: low/inter")
+  
+  heatmap_data <- matrix(NA, 
+                         ncol = length(marker_permutations),
+                         nrow = length(groups))
+
+  
+  for (marker in marker_permutations) {
+    
+   Attr <- unlist(sapply(list_of_metrics[[marker]], 
+                             function(my_metrics) {
+                              tryCatch(
+                                {(median(my_metrics[["DIN"]])) / ((my_metrics[["Cell_Counts"]][strsplit(marker, sep="_")[[1]][2]]) / (pi * 1500^2) )},
+                                error = function(e) {NA}
+                              )
+                            }
+            ))
+
+
+    for(group in groups) {
+
+      #Generate median cell count for each subtype analysed
+      heatmap_data[group, marker] <- 
+
+
+        if (group=="Total") { 
+          median(na.omit(Attr))
+          
+        } else if (group=="Basal") { 
+            filter <- (annotation[names(Attr), "PAM50_basal_nonBasal"] == "Basal")
+            median(na.omit(Attr[filter]))
+            
+        } else if (group=="Basal-IM+") {
+        
+          filter <- (annotation[names(Attr), "PAM50_basal_nonBasal"] == "Basal" &
+                     annotation[names(Attr), "TNBCtype_IMpositive"] == "1")
+          median(na.omit(Attr[filter]))
+          
+        } else if (group == "Basal-IM-") {
+          filter <- (annotation[names(Attr), "PAM50_basal_nonBasal"] == "Basal" &
+                     annotation[names(Attr), "TNBCtype_IMpositive"] == "0")
+          median(na.omit(Attr[filter]))
+        
+        } else if (group == "Basal-HRD: high") {
+          filter <- (annotation[names(Attr), "PAM50_basal_nonBasal"] == "Basal" &
+                     annotation[names(Attr), "HRD.2.status"] == "high")
+          median(na.omit(Attr[filter]))
+        
+        } else if (group == "Basal-HRD: low/inter") {
+          filter <- (annotation[names(Attr), "PAM50_basal_nonBasal"] == "Basal" &
+                     annotation[names(Attr), "HRD.2.status"] == "low/inter")
+          median(na.omit(Attr[filter]))}
+    }  
+  }
+
+  # Generating and saving plots
+
+png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_Attr_with_p53.png")
+
+    Heatmap(heatmap_data,
+            col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("blue", "red")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Attr (DIN/density)")
+            )
+
+  dev.off()
+
+change_heatmap_data <- t(apply(heatmap_data, 
+                            1,
+                            FUN = function(row) {
+                              row / heatmap_data["Total", ]
+                            }))
+
+png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_Attr.change_with_p53.png")
+
+    Heatmap(change_heatmap_data,
+            col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("blue", "white", "red")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Change in Attr")
+            )
+
+  dev.off()
+
+
+
+## PAM50 NonBasal samples
+
+# Generate matrix with median of attraction values
+
+  #Determine possible combinations of markers and getting DIN matrix
+
+  marker_permutations <- permutations(reference_phen, r=2, n=length(reference_phen))
+  marker_permutations <- sapply(1:nrow(marker_permutations), function(row) paste(marker_permutations[row,], collapse="_"))
+
+  groups <- c("Total", "Non Basal", "Non Basal-IM+", "Non Basal-IM-", "Non Basal-LAR", "Non Basal-nonLAR")
+  
+  heatmap_data <- matrix(NA, 
+                         ncol = length(marker_permutations),
+                         nrow = length(groups))
+
+  
+  for (marker in marker_permutations) {
+    
+   Attr <- unlist(sapply(list_of_metrics[[marker]], 
+                             function(my_metrics) {
+                              tryCatch(
+                                {(median(my_metrics[["DIN"]])) / ((my_metrics[["Cell_Counts"]][strsplit(marker, sep="_")[[1]][2]]) / (pi * 1500^2) )},
+                                error = function(e) {NA}
+                              )
+                            }
+            ))
+
+
+    for(group in groups) {
+
+      #Generate median cell count for each subtype analysed
+      heatmap_data[group, marker] <- 
+
+
+        if (group=="Total") { 
+          median(na.omit(DIN))
+          
+        } else if (group=="Non Basal") { 
+            filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal")
+            median(na.omit(DIN[filter]))
+            
+        } else if (group=="Non Basal-IM+") {
+        
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal" &
+                     annotation[names(DIN), "TNBCtype_IMpositive"] == "1")
+          median(na.omit(DIN[filter]))
+          
+        } else if (group == "Non Basal-IM-") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal" &
+                     annotation[names(DIN), "TNBCtype_IMpositive"] == "0")
+          median(na.omit(DIN[filter]))
+        
+        } else if (group == "Non Basal-LAR") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal" &
+                     annotation[names(DIN), "LAR_nonLAR"] == "LAR")
+          median(na.omit(DIN[filter]))
+        
+        } else if (group == "Non Basal-non LAR") {
+          filter <- (annotation[names(DIN), "PAM50_basal_nonBasal"] == "NonBasal" &
+                     annotation[names(DIN), "LAR_nonLAR"] == "nonLAR")
+          median(na.omit(DIN[filter]))}
+    }  
+  }
+
+  # Generating and saving plots
+
+png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_Attr_with_p53.png")
+
+    Heatmap(heatmap_data,
+            col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("blue", "red")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Attr (DIN/density)")
+            )
+
+  dev.off()
+
+change_heatmap_data <- t(apply(heatmap_data, 
+                            1,
+                            FUN = function(row) {
+                              row / heatmap_data["Total", ]
+                            }))
+
+png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_Attr.change_with_p53.png")
+
+    Heatmap(change_heatmap_data,
+            col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("blue", "white", "red")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Change in Attr")
+            )
+
+  dev.off()
+
