@@ -1,5 +1,5 @@
 rm(list = ls())
-
+setwd("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots")
 
 # Installing packages if requitred
 if (!require("ggplot2", quietly = TRUE))
@@ -222,7 +222,7 @@ ggplot(data=to_plot,
 
     for(group in groups) {
 
-      #Generate median cell count for each subtype analysed using switch()
+      #Generate median cell count for each subtype 
       heatmap_data[group, marker] <- 
              
         if (group=="Total") { 
@@ -257,7 +257,7 @@ ggplot(data=to_plot,
 
   heatmap_data_log <- log(heatmap_data)
  
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_with_p53.pdf")
 
     Heatmap(heatmap_data,
             col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("red", "green")),
@@ -278,7 +278,7 @@ change_heatmap_data <- t(apply(heatmap_data,
                             }))
 
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_change_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_change_with_p53.pdf")
 
     Heatmap(change_heatmap_data,
             col = colorRamp2(c(min(change_heatmap_data), 1, max(change_heatmap_data)), c("red", "white", "green")),
@@ -292,7 +292,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_change_
 
   dev.off()
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_change_without_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_change_without_p53.pdf")
 
     Heatmap(change_heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")],
             col = colorRamp2(c(min(change_heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")]), 1, max(change_heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")])), c("red", "white", "green")),
@@ -306,7 +306,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_change_
 
   dev.off()
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_without_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_without_p53.pdf")
 
     Heatmap(heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")],
             col = colorRamp2(c(min(heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")]), max(heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")])), c("red", "green")),
@@ -319,7 +319,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_cell_count_without
             )
 dev.off()
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_log_cell_count_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_log_cell_count_with_p53.pdf")
 
     Heatmap(heatmap_data_log,
             col = colorRamp2(c(min(heatmap_data_log), max(heatmap_data_log)), c("red", "green")),
@@ -334,7 +334,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_log_cell_count_wit
   dev.off()
 
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_log_cell_count_without_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_log_cell_count_without_p53.pdf")
 
     Heatmap(heatmap_data_log[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")],
             col = colorRamp2(c(min(heatmap_data_log[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")]), max(heatmap_data_log[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")])), c("red", "green")),
@@ -409,7 +409,7 @@ dev.off()
 
   heatmap_data_log <- log(heatmap_data)
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_with_p53.pdf")
 
     Heatmap(heatmap_data,
             col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("red", "green")),
@@ -423,7 +423,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_with
 
   dev.off()
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_without_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_without_p53.pdf")
 
     Heatmap(heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")],
             col = colorRamp2(c(min(heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")]), max(heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")])), c("red", "green")),
@@ -442,7 +442,7 @@ change_heatmap_data <- t(cbind(apply(heatmap_data,
                               row / heatmap_data["Total", ]
                             })))
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_change_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_change_with_p53.pdf")
 
     Heatmap(change_heatmap_data,
             col = colorRamp2(c(min(change_heatmap_data),1, max(change_heatmap_data)), c("red", "white", "green")),
@@ -455,7 +455,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_chan
 
   dev.off()
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_change_without_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_change_without_p53.pdf")
 
     Heatmap(change_heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")],
             col = colorRamp2(c(min(change_heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")]), 1,  max(change_heatmap_data[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")])), c("red", "white", "green")),
@@ -468,7 +468,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_cell_count_chan
 
   dev.off()
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_log_cell_count_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_log_cell_count_with_p53.pdf")
 
     Heatmap(heatmap_data_log,
             col = colorRamp2(c(min(heatmap_data_log), max(heatmap_data_log)), c("red", "green")),
@@ -482,7 +482,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_log_cell_count_
 
   dev.off()
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_log_cell_count_without_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/nonBasal_log_cell_count_without_p53.pdf")
 
     Heatmap(heatmap_data_log[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")],
             col = colorRamp2(c(min(heatmap_data_log[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")]), max(heatmap_data_log[,c("CD3", "CD8", "CD20", "FOXP3", "CD68", "CD4")])), c("red", "green")),
@@ -514,6 +514,7 @@ dev.off()
   #Defining colnames of the heatmap_data matrix
   colnames(heatmap_data) <- marker_permutations
   rownames(heatmap_data) <- groups
+
 
 
 for (marker in marker_permutations) {
@@ -566,7 +567,7 @@ for (marker in marker_permutations) {
   }
 
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_distances_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_distances_with_p53.pdf")
 
     Heatmap(heatmap_data,
             col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("red", "blue")),
@@ -587,7 +588,7 @@ change_heatmap_data <- t(apply(heatmap_data,
                               row / heatmap_data["Total", ]
                             }))
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_distances.change_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/basal_distances.change_with_p53.pdf")
 
     Heatmap(change_heatmap_data,
             col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("red", "white", "blue")),
@@ -673,7 +674,7 @@ for (marker in marker_permutations) {
   }
 
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_distances_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_distances_with_p53.pdf")
 
     Heatmap(heatmap_data,
             col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("red", "blue")),
@@ -694,7 +695,7 @@ change_heatmap_data <- t(apply(heatmap_data,
                               row / heatmap_data["Total", ]
                             }))
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_distances.change_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_distances.change_with_p53.pdf")
 
     Heatmap(change_heatmap_data,
             col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("red", "white", "blue")),
@@ -716,7 +717,9 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_distances.chang
 
 ## PAM50 Basal samples
 
-# Generate matrix with Mean of median Density in the Neighborhood values
+# Generate matrix with median of median Density in the Neighborhood values
+
+
 
   #Determine possible combinations of markers and getting DIN matrix
 
@@ -739,7 +742,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_distances.chang
    DIN <- unlist(sapply(list_of_metrics[[marker]], 
                              function(my_metrics) {
                               tryCatch(
-                                {median(my_metrics[["DIN"]])},
+                                {mean(my_metrics[["DIN"]])},
                                 error = function(e) {NA}
                               )
                             }
@@ -784,7 +787,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_distances.chang
 
   # Generating and saving plots
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_DIN_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_DIN_with_p53.pdf")
 
     Heatmap(heatmap_data,
             col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("blue", "red")),
@@ -794,9 +797,9 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_DIN_with_p53.png")
             column_order=marker_permutations,
             column_names_gp = gpar(fontsize = 6),
             row_split=c(1,2,3,3,4,4),
-            heatmap_legend_param=list(title="DIN (cells/U²)")
+            heatmap_legend_param=list(title="DIN (cells/pixel)")
             )
-
+print(heatmap_data)
   dev.off()
 
 change_heatmap_data <- t(apply(heatmap_data, 
@@ -805,6 +808,22 @@ change_heatmap_data <- t(apply(heatmap_data,
                               row / heatmap_data["Total", ]
                             }))
 
+
+
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_ChangeDIN_with_p53.pdf")
+
+    Heatmap(change_heatmap_data,
+            col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("red", "white", "blue")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Change in DIN)")
+            )
+
+  dev.off()
 
 
 ## PAM50 Non Basal samples
@@ -830,7 +849,7 @@ for (marker in marker_permutations) {
     DIN <- unlist(sapply(list_of_metrics[[marker]], 
                              function(my_metrics) {
                               tryCatch(
-                                {median(my_metrics[["DIN"]])},
+                                {mean(my_metrics[["DIN"]])},
                                 error = function(e) {NA}
                               )
                             }
@@ -874,7 +893,7 @@ for (marker in marker_permutations) {
   }
 
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_DIN_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_DIN_with_p53.pdf")
 
     Heatmap(heatmap_data,
             col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("blue", "red")),
@@ -884,7 +903,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_DIN_with_p53.pn
             column_order=marker_permutations,
             column_names_gp = gpar(fontsize = 6),
             row_split=c(1,2,3,3,4,4),
-            heatmap_legend_param=list(title="DIN (cells/U²)")
+            heatmap_legend_param=list(title="DIN (cells/pixel)")
             )
 
   dev.off()
@@ -897,6 +916,21 @@ change_heatmap_data <- t(apply(heatmap_data,
                             }))
 
 
+
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_ChangeDIN_with_p53.pdf")
+
+    Heatmap(change_heatmap_data,
+            col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("red", "white", "blue")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Change in DIN)")
+            )
+
+  dev.off()
 
 
 #
@@ -929,7 +963,7 @@ change_heatmap_data <- t(apply(heatmap_data,
    Attr <- unlist(sapply(list_of_metrics[[marker]], 
                              function(my_metrics) {
                               tryCatch(
-                                {(median(my_metrics[["DIN"]])) / (unname(my_metrics[["Cell_Counts"]][strsplit(marker, "_")[[1]][2]]) / (pi * 1500^2) )},
+                                {(mean(my_metrics[["DIN"]])) / (unname(my_metrics[["Cell_Counts"]][strsplit(marker, "_")[[1]][2]]) / (pi * 1500^2) )},
                                 error = function(e) {NA}
                               )
                             }
@@ -973,7 +1007,7 @@ change_heatmap_data <- t(apply(heatmap_data,
 
   # Generating and saving plots
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_Attr_with_p53.png")
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_Attr_with_p53.pdf")
 
     Heatmap(heatmap_data,
             col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("blue", "red")),
@@ -988,6 +1022,28 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_Attr_with_p53.png"
 
   dev.off()
 
+change_heatmap_data <- t(apply(heatmap_data, 
+                            1,
+                            FUN = function(row) {
+                              row / heatmap_data["Total", ]
+                            }))
+
+
+
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_ChangeAttr_with_p53.pdf")
+
+    Heatmap(change_heatmap_data,
+            col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("red", "white", "blue")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Change in attraction")
+            )
+
+dev.off()
 
 
 ## PAM50 NonBasal samples
@@ -1015,7 +1071,7 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_Attr_with_p53.png"
    Attr <- unlist(sapply(list_of_metrics[[marker]], 
                              function(my_metrics) {
                               tryCatch(
-                                {(median(my_metrics[["DIN"]])) / (unname(my_metrics[["Cell_Counts"]][strsplit(marker, "_")[[1]][2]]) / (pi * 1500^2) )},
+                                {(mean(my_metrics[["DIN"]])) / (unname(my_metrics[["Cell_Counts"]][strsplit(marker, "_")[[1]][2]]) / (pi * 1500^2) )},
                                 error = function(e) {NA}
                               )
                             }
@@ -1059,7 +1115,8 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/Basal_Attr_with_p53.png"
   # Generating and saving plots
 
 
-png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_Attr_with_p53.png")
+
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_Attr_with_p53.pdf")
 
     Heatmap(heatmap_data,
             col = colorRamp2(c(min(heatmap_data), max(heatmap_data)), c("blue", "red")),
@@ -1072,5 +1129,27 @@ png("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_Attr_with_p53.p
             heatmap_legend_param=list(title="Attr (DIN/density)")
             )
 
+dev.off()
+
+change_heatmap_data <- t(apply(heatmap_data, 
+                            1,
+                            FUN = function(row) {
+                              row / heatmap_data["Total", ]
+                            }))
 
 
+
+pdf("/home/Illumina/Iñaki_Sasiain/immune_spatial/plots/NonBasal_ChangeAttr_with_p53.pdf")
+
+    Heatmap(change_heatmap_data,
+            col = colorRamp2(c(min(change_heatmap_data), 1,  max(change_heatmap_data)), c("red", "white", "blue")),
+            cluster_rows=FALSE,
+            cluster_columns=FALSE,
+            row_order=groups,
+            column_order=marker_permutations,
+            column_names_gp = gpar(fontsize = 6),
+            row_split=c(1,2,3,3,4,4),
+            heatmap_legend_param=list(title="Change in attraction")
+            )
+
+dev.off()
