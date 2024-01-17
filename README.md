@@ -3,9 +3,11 @@
 * Author: Iñaki Sasiain Casado
 * Supervisors: Johan Staaf and Suze Roostee
 
-### EXPERIMENTAL PROCEDURE
+### ANALYSING TMArQ PROCESSED SINGLE-PLEX SAMPLES
 
-0. Using bash to homogenize the coordinate files' names.
+1. Generating spatial_experiment files from coordinates files.
+
+* Preprocessing files' names to homogenize their format
 
 ```bash
 for file in $(ls ./*_coordinates.txt | grep "CD8_"); 
@@ -45,9 +47,7 @@ for file in *\ *; do
 done;
 ```
 
-1. Generating spatial experiment objects (Run in corsaire)
-
-* Download required packages in a conda environment
+* Generating spatial experiment objects (Run in corsaire)
 
 ``` bash
 conda install -c conda-forge r-optparse;
@@ -56,15 +56,22 @@ conda install -c conda-forge r-biocmanager;
 conda install -c bioconda bioconductor-spatialexperiment;
 conda install -c conda-forge r-terra;
 conda install -c r r-raster;
-```
-```R
+conda install -c conda-forge r-ggplot2;
+conda install -c conda-forge r-r.utils;
+conda install r-alphahull;
+conda install -c conda-forge r-tidyr;
+conda install -c bioconda bioconductor-complexheatmap;
 
+
+
+```R
+install.packages("plotly")
 ```
 
 ```bash
 cd /home/Illumina/Iñaki_Sasiain/immune_spatial/spe_objects; 
 
-Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3 -a ../annotation/supplData_withimages.csv -p ../annotation/coordinates/;
+Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3,CD20 -a ../annotation/supplData_withimages.csv -p ../coordinates/;
 ```
 
 2. Preliminary data analysis
@@ -72,3 +79,23 @@ Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3 -a ../anno
 * TILs and survival
 
 * C
+
+
+
+3. Analysing metrics in Basal or NonBasal TNBC
+
+
+4. Anaysing clustering
+
+- Generating DIN matrices for every sample
+
+```bash
+cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/DIN; 
+
+#Create a variable with the comma separated paths to spe objects
+spe_paths=$(find ../../spe_objects | tr "\n" ",");
+
+#Generating DIN matrices for all the samples
+Rscript ../../DIN_calculator.r -c 40 -o ${spe_paths::-1};
+
+```
