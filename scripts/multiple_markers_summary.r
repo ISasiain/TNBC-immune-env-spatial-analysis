@@ -100,8 +100,8 @@ spe_objects <- list.files(path_to_files)
 
 #Defining reference and target markers
 
-markers1 <- c("p53", "CD3", "CD8", "CD20")
-markers2 <- c("p53", "CD3", "CD8", "CD20")
+markers1 <- c("p53", "CD3", "CD8", "CD20", "CD68", "CD4", "FOXP3")
+markers2 <- c("p53", "CD3", "CD8", "CD20", "CD68", "CD4", "FOXP3")
 
 for (marker_ref in markers1) {
   
