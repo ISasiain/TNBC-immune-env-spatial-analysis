@@ -93,9 +93,12 @@ Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3,CD20 -a ..
 cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/DIN; 
 
 #Create a variable with the comma separated paths to spe objects
-spe_paths=$(find ../../spe_objects | tr "\n" ",");
+spe_paths=$(find ../../spe_objects/* | tr "\n" ",");
 
 #Generating DIN matrices for all the samples
-Rscript ../../DIN_calculator.r -c 40 -o ${spe_paths::-1};
+Rscript ../../scripts/DIN_calculator.r -c 40 -o ${spe_paths::-1};
 
+#Identifying cell clusters
+cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/detected_clusters;
+Rscript ../../scripts/cluster_detector.r -d ../DIN/all_samples_DIN.rds -c 31 -m p53,CD3,CD20,CD8;
 ```
