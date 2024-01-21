@@ -100,5 +100,5 @@ Rscript ../../scripts/DIN_calculator.r -c 40 -o ${spe_paths::-1};
 
 #Identifying cell clusters
 cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/detected_clusters;
-Rscript ../../scripts/cluster_detector.r -d ../DIN/all_samples_DIN.rds -c 31 -m p53,CD3,CD20,CD8;
+nohup Rscript ../../scripts/cluster_detector.r -d ../DIN/all_samples_DIN.rds -c 31 -m p53,CD3,CD20,CD8;
 ```
