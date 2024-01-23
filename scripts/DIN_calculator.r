@@ -189,7 +189,6 @@ names(output_list) <- sapply(density_matrix_list, function(item) item[[1]])
 print("Saving output file...")
 
 # Saving output file
-
 saveRDS(output_list, file="all_samples_DIN.rds")
 
 # Print message to show the end of the execution
