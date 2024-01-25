@@ -104,6 +104,6 @@ nohup Rscript ../../scripts/cluster_detector.r -d ../DIN/all_samples_DIN.rds -c 
 
 #Preliminary analysis of cell cluster density
 
-Rscript ../../scripts/analyse_denisty_clusters.r -d ../DIN/all_samples_DIN.rds -l ../detected_clusters/optimal_clusters.rds -a p53,CD3,CD8,CD20,CD4,CD68,FOXP3
+Rscript ../../scripts/analyse_denisty_clusters.r -d ../DIN/all_samples_DIN.rds -l ../detected_clusters/optimal_clusters.rds -a p53,CD3,CD8,CD20,CD4,CD68,FOXP3 -n ../../annotation/supplData_withimages.csv;
 ```
 
