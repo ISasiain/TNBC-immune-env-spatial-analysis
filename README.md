@@ -71,7 +71,7 @@ install.packages("plotly")
 ```bash
 cd /home/Illumina/Iñaki_Sasiain/immune_spatial/spe_objects; 
 
-Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3,CD20 -a ../annotation/supplData_withimages.csv -p ../coordinates/;
+Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3,CD20,H2AXp,CKPAN -a ../annotation/supplData_withimages.csv -p ../coordinates/;
 ```
 
 2. Preliminary data analysis
@@ -103,7 +103,18 @@ cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/detected_cluste
 nohup Rscript ../../scripts/cluster_detector.r -d ../DIN/all_samples_DIN.rds -c 40 -m p53,CD3,CD20,CD8;
 
 #Preliminary analysis of cell cluster density
+cd ../analyse_clustering/;
+Rscript ../../scripts/analyse_denisty_clusters.r -d ../DIN/all_samples_DIN.rds -l ../detected_clusters/optimal_clusters.rds -a p53,CD3,CD4,CD68,CD8,FOXP3,CD20,H2AXp,CKPAN -n ../../annotation/supplData_withimages.csv;
 
-Rscript ../../scripts/analyse_denisty_clusters.r -d ../DIN/all_samples_DIN.rds -l ../detected_clusters/optimal_clusters.rds -a p53,CD3,CD8,CD20,CD4,CD68,FOXP3 -n ../../annotation/supplData_withimages.csv;
+#Cluster annotation
+Rscript ../../scripts/cluster_classificator.r -d ../DIN/all_samples_DIN.rds -l ../detected_clusters/optimal_clusters.rds -u p53,CD3,CD20,CD8 -n ../../annotation/supplData_withimages.csv -a H2AXp,CKPAN,CD4,CD68,FOXP3;
+
+
+
+
+# Merging the scripts in a single one.
+Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 40 ;
+
+
 ```
 
