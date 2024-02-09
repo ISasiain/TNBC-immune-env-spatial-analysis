@@ -299,43 +299,64 @@ annotated_samples(original_samples[! original_samples %in% c(remove_samples, hom
         clusters=lapply(sort(unique(unname(clusters[[sample]]$cluster))), function(clus) {
 
             #Checking if it is a tumour cluster
-            if (all(list_of_p_values[[sample]][[clus]]["p53", -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")] < 0.05)) {
-
+                        #Checking if it is a tumour cluster
+            if (all(list_of_p_values[[sample]][[clus]]["p53", -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")] < 1e-100)) {
                 list(type = "TUMOUR"
                 )
 
             #Checking if it is an immune cluster
-           #} else if (any(list_of_p_values[[sample]][[clus]][-which(rownames(list_of_p_values[[sample]][[clus]])=="p53"), "p53"]) < 0.05) {
+           } else if (any(list_of_p_values[[sample]][[clus]][-which(rownames(list_of_p_values[[sample]][[clus]])=="p53"), "p53"] < 1e-100)) {
 
-            #    list(
-            #        "type" <- "IMMUNE"
-            #    )
+             # Determining abundance order of the markers in the immune and mixed clusters
+                 order_vec <- rowSums(
+                     list_of_p_values[[sample]][[clus]][
+                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
+                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")] < 0.05,
+                     na.rm = TRUE)
+
+                 names(order_vec) <- rownames(list_of_p_values[[sample]][[clus]][
+                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
+                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")])
+
+                 groups <- sort(unique(order_vec), decreasing=TRUE)
+
+                 for (element in 1:length(order_vec)) {
+
+                   order_vec[element] <- which(groups == order_vec[element])
+
+                 }
+
+
+
+                list(
+                    type = "IMMUNE",
+                    order = order_vec
+                )
 
             #If the previous conditions are not met, it will be considered as a mixed cluster 
             } else {
+                # Determining abundance order of the markers in the immune and mixed clusters
+                 order_vec <- rowSums(
+                     list_of_p_values[[sample]][[clus]][
+                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
+                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")] < 0.05,
+                     na.rm = TRUE)
 
-                # Determining abundance order of the markers in the immune clusters
-                order_vec <- rowSums(
-                    list_of_p_values[[sample]][[clus]][
-                        -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
-                        -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")] < 0.05,
-                    na.rm = TRUE)
+                 names(order_vec) <- rownames(list_of_p_values[[sample]][[clus]][
+                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
+                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")])
 
-                names(order_vec) <- rownames(list_of_p_values[[sample]][[clus]][
-                        -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
-                        -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")])
+                 groups <- sort(unique(order_vec), decreasing=TRUE)
 
-                groups <- sort(unique(order_vec), decreasing=TRUE)
+                 for (element in 1:length(order_vec)) {
 
-                for (element in 1:length(order_vec)) {
+                   order_vec[element] <- which(groups == order_vec[element])
 
-                  order_vec[element] <- which(groups == order_vec[element])
-
-                }
+                 }
 
 
-                list(type = "IMMUNE",
-                    order = order_vec
+                list(type = "MIXED"
+                ,    order = order_vec
                 )
 
             }
