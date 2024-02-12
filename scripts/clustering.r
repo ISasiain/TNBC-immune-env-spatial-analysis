@@ -50,7 +50,7 @@ argument_list <- list(
 
     make_option(c("-M", "--minimum_distance_between_centroids"), 
                 type="numeric",
-                default=1*10^-4,
+                default=2.5*10^-4,
                 help="The minimum mean distance between centroids of each sample to take the clustering into account.",
                 metavar="[NUMBER]"),
 
@@ -76,7 +76,7 @@ arguments <- parse_args(OptionParser(option_list=argument_list,
 #
 
 # Loading input file
-DIN_matrices <- readRDS(arguments$DIN_matrix_list)
+DIN_matrices <- readRDS(arguments$DIN_matrix_list)[1:20]
 original_samples <- names(DIN_matrices)
 
 # Generating vector of markers 
@@ -203,7 +203,7 @@ if (length(not_clustered) != 0) {
 #
 
 # Calculating the distance between centroids
-dbc <- lapply(clusters, 
+dbc <- lapply(output_clusters_list, 
        function(cluster) {
 
                 mean(dist( # Calculate distance between centers
@@ -213,23 +213,16 @@ dbc <- lapply(clusters,
     )
 
 #Adding names to dbc list
-names(dbc) <- names(clusters)
+names(dbc) <- names(output_clusters_list)
+
+#print(dbc)
 
 #Determining the samples with too similar clusters
-homogeneous_samples <. foreach(sample=names(dbc)) {
-
-    if (dbc[[sample]] < arguments$minimum_distance_between_centroids) {
-
-        return(sample)
-
-    } else {NULL}
-
-}
-
+homogeneous_samples <- names(dbc)[dbc <= arguments$minimum_distance_between_centroids]
 
 # Print warining message about the dismissed clusters
 cat("\n\nThe clusters detected in",
-    sum(mean_dbc <= arguments$minimum_distance_between_centroids), 
+    sum(dbc <= arguments$minimum_distance_between_centroids), 
     "samples were considered too similar, and therefore will be considered as homogeneous samples\n\n")
 
 
@@ -247,25 +240,25 @@ annotated_samples[remove_samples] <- "Low cell density"
 
 
 # ANNOTATING HOMOGENEOUS SAMPLES
-annotated_samples[homogeneous_samples] <- foreach(sample=homogeneous_samples) %dopar% {
+for (sample in homogeneous_samples) {
 
         # Generate matrix with p values obtained by Mann-Withney U test  
         p_value_greater <- matrix(NA, 
-                                ncol=length(markers_for_clustering),
-                                nrow=length(markers_for_clustering),
-                                dimnames=list(markers_for_clustering,markers_for_clustering))
+                                ncol=length(markers),
+                                nrow=length(markers),
+                                dimnames=list(markers,markers))
 
 
         # Filling the list of matrices
-        for (row in markers_for_clustering) {
-            for (col in markers_for_clustering) {
+        for (row in markers) {
+            for (col in markers) {
 
                 if(row != col) {
 
                     p_value_greater[row, col] <- wilcox.test(
                         
-                        DINs[[sample]][,row],
-                        DINs[[sample]][,col],
+                        DIN_matrices[[sample]][,row],
+                        DIN_matrices[[sample]][,col],
                         exact=FALSE,
                         alternative = "greater")$p.value
 
@@ -275,48 +268,26 @@ annotated_samples[homogeneous_samples] <- foreach(sample=homogeneous_samples) %d
             }
 
   #Generating annotation
-  list(
+  annotated_samples[[sample]] <- list(
 
     type="Homogeneous",
-    class = if (any(p_value_greater[row,] < 0.05)) {
-      "TUMOUR"
-     #} else if () {
-     #  "IMMUNE"
-     } else {
-       "IMMUNE"
-     }
-   )
-    
-}
-
-
-# ANNOTATING NON-HOMOGENEOUS SAMPLES
-annotated_samples(original_samples[! original_samples %in% c(remove_samples, homogeneous_samples)]) <- foreach(sample=original_samples[! original_samples %in% c(remove_samples, homogeneous_samples)]) %dopar% {
-
-    #Generating annotation
-    list(
-        type="Heterogeneous",
-        clusters=lapply(sort(unique(unname(clusters[[sample]]$cluster))), function(clus) {
-
-            #Checking if it is a tumour cluster
-                        #Checking if it is a tumour cluster
-            if (all(list_of_p_values[[sample]][[clus]]["p53", -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")] < 1e-100)) {
+    class = if (all(p_value_greater["p53", -which(colnames(p_value_greater)=="p53")] < 1e-100)) {
                 list(type = "TUMOUR"
                 )
 
             #Checking if it is an immune cluster
-           } else if (any(list_of_p_values[[sample]][[clus]][-which(rownames(list_of_p_values[[sample]][[clus]])=="p53"), "p53"] < 1e-100)) {
+           } else if (any(p_value_greater[-which(rownames(p_value_greater)=="p53"), "p53"] < 1e-100)) {
 
              # Determining abundance order of the markers in the immune and mixed clusters
                  order_vec <- rowSums(
-                     list_of_p_values[[sample]][[clus]][
-                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
-                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")] < 0.05,
+                     p_value_greater[
+                         -which(colnames(p_value_greater)=="p53"), 
+                         -which(colnames(p_value_greater)=="p53")] < 0.05,
                      na.rm = TRUE)
 
-                 names(order_vec) <- rownames(list_of_p_values[[sample]][[clus]][
-                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
-                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")])
+                 names(order_vec) <- rownames(p_value_greater[
+                         -which(colnames(p_value_greater)=="p53"), 
+                         -which(colnames(p_value_greater)=="p53")])
 
                  groups <- sort(unique(order_vec), decreasing=TRUE)
 
@@ -337,14 +308,14 @@ annotated_samples(original_samples[! original_samples %in% c(remove_samples, hom
             } else {
                 # Determining abundance order of the markers in the immune and mixed clusters
                  order_vec <- rowSums(
-                     list_of_p_values[[sample]][[clus]][
-                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
-                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")] < 0.05,
+                     p_value_greater[
+                         -which(colnames(p_value_greater)=="p53"), 
+                         -which(colnames(p_value_greater)=="p53")] < 0.05,
                      na.rm = TRUE)
 
-                 names(order_vec) <- rownames(list_of_p_values[[sample]][[clus]][
-                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53"), 
-                         -which(colnames(list_of_p_values[[sample]][[clus]])=="p53")])
+                 names(order_vec) <- rownames(p_value_greater[
+                         -which(colnames(p_value_greater)=="p53"), 
+                         -which(colnames(p_value_greater)=="p53")])
 
                  groups <- sort(unique(order_vec), decreasing=TRUE)
 
@@ -355,8 +326,116 @@ annotated_samples(original_samples[! original_samples %in% c(remove_samples, hom
                  }
 
 
-                list(type = "MIXED"
-                ,    order = order_vec
+                list(type = "MIXED",
+                     order = order_vec
+                )
+      }
+    )
+    
+}
+
+
+# ANNOTATING NON-HOMOGENEOUS SAMPLES
+
+list_of_p_values <- list()
+
+for (sample in original_samples[! original_samples %in% c(remove_samples, homogeneous_samples)]) {
+
+  # Generating list of matrices with p values obtained by Mann-Withney U test
+
+    list_of_p_values <- 
+
+          lapply(sort(unique(unname(output_clusters_list[[sample]]$cluster))), function(clus) {
+          
+          # Generate list of matrices with p values obtained by Mann-Withney U test and effect size (difference of median)
+          p_value_greater <- matrix(NA, 
+                                  ncol=length(markers),
+                                  nrow=length(markers),
+                                  dimnames=list(markers,markers))
+          
+
+          # Filling the list of matrices
+
+          for (row in markers) {
+              for (col in markers) {
+                  if(row != col) {
+                      p_value_greater[row, col] <- wilcox.test(
+                          
+                          DIN_matrices[[sample]][output_clusters_list[[sample]]$cluster==clus,row],
+                          DIN_matrices[[sample]][output_clusters_list[[sample]]$cluster==clus,col],
+                          exact=FALSE,
+                          alternative = "greater")$p.value
+
+                      }
+                  }
+              }
+              p_value_greater
+          })
+
+    #print(list_of_p_values)
+
+    #Generating annotation
+    annotated_samples[[sample]] <- list(
+        type="Heterogeneous",
+        clusters=lapply(sort(unique(unname(output_clusters_list[[sample]]$cluster))), function(clus) {
+
+            #Checking if it is a tumour cluster
+            if (all(list_of_p_values[[clus]]["p53", -which(colnames(list_of_p_values[[clus]])=="p53")] < 1e-100)) {
+                list(type = "TUMOUR")
+
+            #Checking if it is an immune cluster
+            } else if (any(list_of_p_values[[clus]][-which(rownames(list_of_p_values[[clus]])=="p53"), "p53"] < 1e-100)) {
+
+             # Determining abundance order of the markers in the immune and mixed clusters
+                 order_vec <- rowSums(
+                     list_of_p_values[[clus]][
+                         -which(colnames(list_of_p_values[[clus]])=="p53"), 
+                         -which(colnames(list_of_p_values[[clus]])=="p53")] < 0.05,
+                     na.rm = TRUE)
+
+                 names(order_vec) <- rownames(list_of_p_values[[clus]][
+                         -which(colnames(list_of_p_values[[clus]])=="p53"), 
+                         -which(colnames(list_of_p_values[[clus]])=="p53")])
+
+                 groups <- sort(unique(order_vec), decreasing=TRUE)
+
+                 for (element in 1:length(order_vec)) {
+
+                   order_vec[element] <- which(groups == order_vec[element])
+
+                 }
+
+
+
+                list(
+                    type = "IMMUNE",
+                    order = order_vec
+                )
+
+            #If the previous conditions are not met, it will be considered as a mixed cluster 
+            } else {
+                # Determining abundance order of the markers in the immune and mixed clusters
+                 order_vec <- rowSums(
+                     list_of_p_values[[clus]][
+                         -which(colnames(list_of_p_values[[clus]])=="p53"), 
+                         -which(colnames(list_of_p_values[[clus]])=="p53")] < 0.05,
+                     na.rm = TRUE)
+
+                 names(order_vec) <- rownames(list_of_p_values[[clus]][
+                         -which(colnames(list_of_p_values[[clus]])=="p53"), 
+                         -which(colnames(list_of_p_values[[clus]])=="p53")])
+
+                 groups <- sort(unique(order_vec), decreasing=TRUE)
+
+                 for (element in 1:length(order_vec)) {
+
+                   order_vec[element] <- which(groups == order_vec[element])
+
+                 }
+
+
+                list(type = "MIXED",
+                    order = order_vec
                 )
 
             }
@@ -369,3 +448,6 @@ annotated_samples(original_samples[! original_samples %in% c(remove_samples, hom
 
 # Saving output list
 saveRDS(annotated_samples, "annotated_samples.rds")
+
+# Stop parallelization
+stopCluster(cl)
