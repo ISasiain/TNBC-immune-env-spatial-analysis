@@ -113,7 +113,7 @@ Rscript ../../scripts/cluster_classificator.r -d ../DIN/all_samples_DIN.rds -l .
 
 
 # Merging the scripts in a single one.
-Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 40 ;
+nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 20;
 
 
 ```
