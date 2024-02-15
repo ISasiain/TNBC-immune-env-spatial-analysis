@@ -116,5 +116,9 @@ Rscript ../../scripts/cluster_classificator.r -d ../DIN/all_samples_DIN.rds -l .
 nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 20;
 
 
+
+Rscript ../../scripts/clustering_analysis.r -n ../../annotation/supplData_withimages.csv -d ../DIN/all_samples_DIN.rds -c ../detected_clusters/optimal_clusters.rds -s annotated_samples.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3;
+
 ```
 
+### ANALYSING OF VECTRA VERIS MULTIPLEX IHC DATA
