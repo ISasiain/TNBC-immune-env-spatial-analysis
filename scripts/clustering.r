@@ -22,9 +22,6 @@ if (!require("optparse", quietly = TRUE))
   install.packages("optparse")
 library(optparse)
 
-if (!require("stats", quietly = TRUE))
-  install.packages("stats")
-library(stats)
 
 #
 # PARSING COMMAND LINE ARGUMENTS
@@ -43,20 +40,20 @@ argument_list <- list(
                 help="A comma separated list of the markers to be used to determine clusters should be entered here.",
                 metavar="[PATH]"),
 
-    make_option(c("-a", "--additional_clusters"), 
+    make_option(c("-a", "--additional_markers"), 
                 type="character", 
                 help="A comma separated list of the additional markers to analyse (not to define clusters) should be entered here.",
                 metavar="[PATH]"),
 
     make_option(c("-M", "--minimum_distance_between_centroids"), 
                 type="numeric",
-                default=2.5*10^-4,
+                default=1.20,
                 help="The minimum mean distance between centroids of each sample to take the clustering into account.",
                 metavar="[NUMBER]"),
 
     make_option(c("-D", "--density_threshold"), 
                 type="numeric",
-                default=3*10^-4,
+                default=2.8*10^-4,
                 help="The minimum cell density in a sample to consider a sample feasible for the analysis.",
                 metavar="[NUMBER]"),
     
@@ -64,7 +61,21 @@ argument_list <- list(
               type="integer", 
               default=1,  
               help="Number of cores to be used to run the program [default %default]",
-              metavar = "[NUMBER]"))
+              metavar = "[NUMBER]"),
+
+    make_option(c("-n", "--output_name"), 
+              type="character", 
+              default="output_clustering",  
+              help="Name of the output files [default %default]",
+              metavar = "[NAME]"),
+
+    make_option(c("-p", "--path_output"), 
+              type="character", 
+              default="./",  
+              help="Path of the output files [default %default]",
+              metavar = "[PATH]")
+              
+              )
 
 arguments <- parse_args(OptionParser(option_list=argument_list, 
                                     description="This program generates cell clusters based on DIN values."))
@@ -76,12 +87,12 @@ arguments <- parse_args(OptionParser(option_list=argument_list,
 #
 
 # Loading input file
-DIN_matrices <- readRDS(arguments$DIN_matrix_list)[1:20]
+DIN_matrices <- readRDS(arguments$DIN_matrix_list)
 original_samples <- names(DIN_matrices)
 
 # Generating vector of markers 
 markers <- strsplit(arguments$markers_for_clustering, ",")[[1]]
-additional_markers <- strsplit(arguments$additional_clusters, ",")[[1]]
+additional_markers <- strsplit(arguments$additional_markers, ",")[[1]]
 
 
 #
@@ -91,7 +102,7 @@ additional_markers <- strsplit(arguments$additional_clusters, ",")[[1]]
 cat("\nUsing", arguments$cores,"cores\n\n")
 
 #Creating the cluster to run the process in parallel
-cl <- makeCluster(arguments$cores)  
+cl <- makeCluster(arguments$cores, outfile="clustering.log")  
 registerDoParallel(cl)  
 
 
@@ -123,8 +134,6 @@ if (length(remove_samples) != 0) {
 
 }
 
-saveRDS(remove_samples, "filtered_samples.rds")
-
 
 # Removing samples with low cell density
 DIN_matrices <- DIN_matrices[!(names(DIN_matrices) %in% remove_samples)]
@@ -145,6 +154,7 @@ optimal_number_of_clusters <- foreach(sample=names(DIN_matrices), .packages="NbC
     tryCatch({(list(sample,
           length(unique(NbClust(
               DIN_matrices[[sample]][,markers],
+              max.nc=5, #Maximum number of clusters
               method="kmeans" #Using kmeans clustering
             )$Best.partition))
           )
@@ -160,9 +170,6 @@ optimal_number_of_clusters <- foreach(sample=names(DIN_matrices), .packages="NbC
 #Rearraging list
 num_clusters_list <- lapply(optimal_number_of_clusters, function(item) item[[2]])
 names(num_clusters_list) <- sapply(optimal_number_of_clusters, function(item) item[[1]])
-
-# Generating output files
-saveRDS(num_clusters_list, file="number_optimal_clusters.rds")
 
 #Remove NULL values from list
 num_clusters_list <- num_clusters_list[!sapply(num_clusters_list, is.null)]
@@ -207,7 +214,8 @@ dbc <- lapply(output_clusters_list,
        function(cluster) {
 
                 mean(dist( # Calculate distance between centers
-                    cluster$centers # Getting centers of centroids
+                    cluster$centers, # Getting centers of centroids
+                    method="canberra" # Using canberra distance
             ))
        }
     )
@@ -215,7 +223,6 @@ dbc <- lapply(output_clusters_list,
 #Adding names to dbc list
 names(dbc) <- names(output_clusters_list)
 
-#print(dbc)
 
 #Determining the samples with too similar clusters
 homogeneous_samples <- names(dbc)[dbc <= arguments$minimum_distance_between_centroids]
@@ -262,80 +269,81 @@ for (sample in homogeneous_samples) {
                         exact=FALSE,
                         alternative = "greater")$p.value
 
+                                        }
+                                    }
+
+                                }
+
+
+                      #Generating annotation
+                      annotated_samples[[sample]] <- list(
+
+                        type="Homogeneous",
+                        class = if (all(p_value_greater["p53", -which(colnames(p_value_greater)=="p53")] < 1e-100)) {
+                                    list(type = "TUMOUR"
+                                    )
+
+                                #Checking if it is an immune cluster
+                               } else if (any(p_value_greater[-which(rownames(p_value_greater)=="p53"), "p53"] < 1e-100)) {
+
+                                  #Determining abundance order of the markers in the immune and mixed clusters
+                                     order_vec <- colSums(
+                                         p_value_greater[
+                                             -which(colnames(p_value_greater)=="p53"), 
+                                             -which(colnames(p_value_greater)=="p53")] < 0.05,
+                                         na.rm = TRUE)
+
+                                     names(order_vec) <- rownames(p_value_greater[
+                                             -which(colnames(p_value_greater)=="p53"), 
+                                             -which(colnames(p_value_greater)=="p53")])
+
+                                     groups <- sort(unique(order_vec), decreasing=TRUE)
+
+                                     for (element in 1:length(order_vec)) {
+
+                                       order_vec[element] <- which(groups == order_vec[element])
+
+                                     }
+
+
+
+                                    list(
+                                        type = "IMMUNE"
+                                        ,order = order_vec
+                                    )
+
+                                #If the previous conditions are not met, it will be considered as a mixed cluster 
+                                } else {
+                                    # Determining abundance order of the markers in the immune and mixed clusters
+                                     order_vec <- rowSums(
+                                         p_value_greater[
+                                             -which(colnames(p_value_greater)=="p53"), 
+                                             -which(colnames(p_value_greater)=="p53")] < 0.05,
+                                         na.rm = TRUE)
+
+                                     names(order_vec) <- rownames(p_value_greater[
+                                             -which(colnames(p_value_greater)=="p53"), 
+                                             -which(colnames(p_value_greater)=="p53")])
+
+                                     groups <- sort(unique(order_vec), decreasing=TRUE)
+
+                                     for (element in 1:length(order_vec)) {
+
+                                       order_vec[element] <- which(groups == order_vec[element])
+
+                                     }
+
+
+                                    list(type = "MIXED"
+                                        ,order = order_vec
+                                    )
+                          }
+                        )
+                        
                     }
-                }
-
-            }
-
-  #Generating annotation
-  annotated_samples[[sample]] <- list(
-
-    type="Homogeneous",
-    class = if (all(p_value_greater["p53", -which(colnames(p_value_greater)=="p53")] < 1e-100)) {
-                list(type = "TUMOUR"
-                )
-
-            #Checking if it is an immune cluster
-           } else if (any(p_value_greater[-which(rownames(p_value_greater)=="p53"), "p53"] < 1e-100)) {
-
-             # Determining abundance order of the markers in the immune and mixed clusters
-                 order_vec <- rowSums(
-                     p_value_greater[
-                         -which(colnames(p_value_greater)=="p53"), 
-                         -which(colnames(p_value_greater)=="p53")] < 0.05,
-                     na.rm = TRUE)
-
-                 names(order_vec) <- rownames(p_value_greater[
-                         -which(colnames(p_value_greater)=="p53"), 
-                         -which(colnames(p_value_greater)=="p53")])
-
-                 groups <- sort(unique(order_vec), decreasing=TRUE)
-
-                 for (element in 1:length(order_vec)) {
-
-                   order_vec[element] <- which(groups == order_vec[element])
-
-                 }
 
 
-
-                list(
-                    type = "IMMUNE",
-                    order = order_vec
-                )
-
-            #If the previous conditions are not met, it will be considered as a mixed cluster 
-            } else {
-                # Determining abundance order of the markers in the immune and mixed clusters
-                 order_vec <- rowSums(
-                     p_value_greater[
-                         -which(colnames(p_value_greater)=="p53"), 
-                         -which(colnames(p_value_greater)=="p53")] < 0.05,
-                     na.rm = TRUE)
-
-                 names(order_vec) <- rownames(p_value_greater[
-                         -which(colnames(p_value_greater)=="p53"), 
-                         -which(colnames(p_value_greater)=="p53")])
-
-                 groups <- sort(unique(order_vec), decreasing=TRUE)
-
-                 for (element in 1:length(order_vec)) {
-
-                   order_vec[element] <- which(groups == order_vec[element])
-
-                 }
-
-
-                list(type = "MIXED",
-                     order = order_vec
-                )
-      }
-    )
-    
-}
-
-
-# ANNOTATING NON-HOMOGENEOUS SAMPLES
+                    # ANNOTATING NON-HOMOGENEOUS SAMPLES
 
 list_of_p_values <- list()
 
@@ -372,7 +380,6 @@ for (sample in original_samples[! original_samples %in% c(remove_samples, homoge
               p_value_greater
           })
 
-    #print(list_of_p_values)
 
     #Generating annotation
     annotated_samples[[sample]] <- list(
@@ -447,7 +454,11 @@ for (sample in original_samples[! original_samples %in% c(remove_samples, homoge
 
 
 # Saving output list
-saveRDS(annotated_samples, "annotated_samples.rds")
+saveRDS(annotated_samples, paste0(arguments$path_output, arguments$output_name, ".rds"))
+
+cat("\n\n****************\n")
+cat("Process finished!\n")
+cat("****************\n\n")    
 
 # Stop parallelization
 stopCluster(cl)
