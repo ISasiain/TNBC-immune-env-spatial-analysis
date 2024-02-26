@@ -113,12 +113,14 @@ Rscript ../../scripts/cluster_classificator.r -d ../DIN/all_samples_DIN.rds -l .
 
 
 # Merging the scripts in a single one.
-nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 20;
+nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 30;
 
+# Comparing the effect of the homogenity cutoff
+thresholds=(0.9 1 1.1 1.2 1.3 1.4 1.5)
 
-
-Rscript ../../scripts/clustering_analysis.r -n ../../annotation/supplData_withimages.csv -d ../DIN/all_samples_DIN.rds -c ../detected_clusters/optimal_clusters.rds -s annotated_samples.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3;
-
+for num in ${thresholds[@]}; 
+    do Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 40 -M ${num} -n ${num}_cutoff.clustering;
+    done
 ```
 
 ### ANALYSING OF VECTRA VERIS MULTIPLEX IHC DATA
