@@ -120,7 +120,19 @@ thresholds=(0.9 1 1.1 1.2 1.3 1.4 1.5)
 
 for num in ${thresholds[@]}; 
     do Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 40 -M ${num} -n ${num}_cutoff.clustering;
-    done
+    done;
+
+
+# Analysing results
+thresholds=(0.9 1 1.1 1.2 1.3 1.4 1.5)
+
+for num in ${thresholds[@]}; 
+    do Rscript ../../scripts/clustering_analysis.r -d ../DIN/all_samples_DIN.rds -c optimal_clusters.rds -s ${num}_cutoff.clustering.rds -n ../../annotation/supplData_withimages.csv -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -o ${num};
+    done;
+
+
+
+
 ```
 
 ### ANALYSING OF VECTRA VERIS MULTIPLEX IHC DATA
