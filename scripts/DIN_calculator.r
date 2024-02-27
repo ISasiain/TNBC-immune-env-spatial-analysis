@@ -108,14 +108,14 @@ calculate_density_matrix <- function(spe_object, radius) {
 
 
             #Generating matrix to store the denisty in the neighborhood (DIN) values
-            number_of_columns <- 2 + length(unique(markers))
+            number_of_columns <- 3 + length(unique(markers))
             number_of_rows <- length(spe_object$"Cell.ID")
 
 
             DIN_matrix <- matrix(NA, nrow=number_of_rows, ncol=number_of_columns)
 
             rownames(DIN_matrix) <- spe_object$"Cell.ID"
-            colnames(DIN_matrix) <- c("X_coor", "Y_coor", unique(spe_object$"Cell.Type"))
+            colnames(DIN_matrix) <- c("X_coor", "Y_coor", "Phenotype", unique(spe_object$"Cell.Type"))
 
             #Generating data frame with all the cellIDs, Cell.Type and coordinates
             spatial_data <- cbind(spe_object@colData[, c("Cell.ID", "Cell.Type")], spatialCoords(spe_object))
@@ -124,6 +124,9 @@ calculate_density_matrix <- function(spe_object, radius) {
             #Getting spatial coordinates
             DIN_matrix[,c("X_coor",  "Y_coor")] <- spatialCoords(spe_object)
             
+            #Getting cell phenotypes
+            DIN_matrix[, "Phenotype"] <- spe_object$"Cell.Type"
+
             #Removing cells without defined coordinates. It happens in rare cases
             spatial_data <- na.omit(spatial_data)
             DIN_matrix <- DIN_matrix[spatial_data$Cell.ID,]
@@ -189,6 +192,7 @@ names(output_list) <- sapply(density_matrix_list, function(item) item[[1]])
 print("Saving output file...")
 
 # Saving output file
+
 saveRDS(output_list, file="all_samples_DIN.rds")
 
 # Print message to show the end of the execution
