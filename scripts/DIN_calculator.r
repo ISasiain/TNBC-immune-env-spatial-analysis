@@ -81,7 +81,6 @@ print("Reading SPE objects...")
 
 spe_names <- strsplit(arguments$spe_objects, split=",")[[1]]
 
-
 #Storing spe objects in a list. Using parLapply to parallelize the process
 
 file_name_list <- foreach(file=spe_names) %dopar% {
@@ -125,11 +124,11 @@ calculate_density_matrix <- function(spe_object, radius) {
             DIN_matrix[,c("X_coor",  "Y_coor")] <- spatialCoords(spe_object)
             
             #Getting cell phenotypes
-            DIN_matrix[, "Phenotype"] <- spe_object$"Cell.Type"
+            #DIN_matrix[, "Phenotype"] <- spe_object$"Cell.Type"
 
             #Removing cells without defined coordinates. It happens in rare cases
             spatial_data <- na.omit(spatial_data)
-            DIN_matrix <- DIN_matrix[spatial_data$Cell.ID,]
+            DIN_matrix <- DIN_matrix[spatial_data$Cell.ID,] # Filtering and sorting the matrix
 
             #Calculating DIN values
             for (cell_type in unique(markers)) {
@@ -160,14 +159,18 @@ calculate_density_matrix <- function(spe_object, radius) {
                 }
             )
 
+            DIN_matrix <- as.data.frame(DIN_matrix)
+
+            DIN_matrix$"Phenotype" <- spe_object$"Cell.Type"
+
             }
 
     return(DIN_matrix)
 }
 
 
-print("Calculating density in the neighborhood matrices...")
 
+print("Calculating density in the neighborhood matrices...")
 
 density_matrix_list <- foreach(s=spe_names, .packages=c("SPIAT")) %dopar% {
   
