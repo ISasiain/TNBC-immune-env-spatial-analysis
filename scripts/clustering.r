@@ -42,7 +42,7 @@ argument_list <- list(
 
     make_option(c("-a", "--additional_markers"), 
                 type="character", 
-                default="",
+                default=NA,
                 help="A comma separated list of the additional markers to analyse (not to define clusters) should be entered here.",
                 metavar="[PATH]"),
 
@@ -157,42 +157,21 @@ DIN_matrices <- DIN_matrices[!(names(DIN_matrices) %in% remove_samples)]
 
 #Determining optimal number of clusters for each sample
 optimal_number_of_clusters <- foreach(sample=names(DIN_matrices), .packages="NbClust") %dopar% {
-  
-  #If the density of some of the markers to be used for clustering is not defined
-  #the sample will be ignored.
-  if (all(markers %in% colnames(DIN_matrices[[sample]]))) {
-    
-    # Generate optimal number of clusters based on the specified markers
-    tryCatch({(list(sample,
-          length(unique(NbClust(
-              DIN_matrices[[sample]][,markers],
-              max.nc= arguments$max_number_of_clusters, #Maximum number of clusters
-              method="kmeans" #Using kmeans clustering
+
+    if (arguments$max_number_of_clusters > 2) {
+
+        # Generate optimal number of clusters based on the specified markers that are included in the sample
+        tryCatch({(list(sample,
+            length(unique(NbClust(
+                DIN_matrices[[sample]][,markers[markers %in% colnames(DIN_matrices[[sample]])]],
+                max.nc=arguments$max_number_of_clusters, #Maximum number of clusters
+                method="kmeans" #Using kmeans clustering
             )$Best.partition))
-          )
+            )
         )},
-           error=function(e) {} #Skip sample if error
+            error=function(e) {} #Skip sample if error
         )
-    
-
-  } else {
-
-    # Add column of zeros for the markers not included in the DIN matrix
-    #DIN_matrices[[sample]][, markers[!markers %in% colnames(DIN_matrices[[sample]])]] <- 0
-
-    # Generate optimal number of clusters based on the specified markers
-    tryCatch({(list(sample,
-          length(unique(NbClust(
-              DIN_matrices[[sample]][,markers[markers %in% colnames(DIN_matrices[[sample]])]],
-              max.nc=5, #Maximum number of clusters
-              method="kmeans" #Using kmeans clustering
-            )$Best.partition))
-          )
-        )},
-           error=function(e) {} #Skip sample if error
-        )
-  }
-
+    } else {list(sample, 2)} # If the maximum number of clusters is two there is no need to estimate the optimal number of clusters
 }
 
 #Rearraging list
@@ -253,7 +232,7 @@ cat("\n\nThe clusters detected in",
 #
 
 # Adding additional markers to the list of markers
-if (additional_markers != "") {
+if (length(na.omit(additional_markers)) != 0) {
     markers <- c(markers, additional_markers)
 }
 
