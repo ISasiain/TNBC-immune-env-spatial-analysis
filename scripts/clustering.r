@@ -42,7 +42,19 @@ argument_list <- list(
 
     make_option(c("-a", "--additional_markers"), 
                 type="character", 
+                default="",
                 help="A comma separated list of the additional markers to analyse (not to define clusters) should be entered here.",
+                metavar="[PATH]"),
+
+    make_option(c("-l", "--max_number_of_clusters"), 
+                type="numeric", 
+                help="The maximum number of expected clusters must be entered here.",
+                default=5,
+                metavar="[PATH]"),
+
+    make_option(c("-t", "--tumour_marker"), 
+                type="character", 
+                help="The name of the marker to use as a tumour markers must be entered here.",
                 metavar="[PATH]"),
 
     make_option(c("-M", "--minimum_distance_between_centroids"), 
@@ -87,7 +99,7 @@ arguments <- parse_args(OptionParser(option_list=argument_list,
 #
 
 # Loading input file
-DIN_matrices <- readRDS(arguments$DIN_matrix_list)
+DIN_matrices <- readRDS(arguments$DIN_matrix_list)[seq(1,99)]
 original_samples <- names(DIN_matrices)
 
 # Generating vector of markers 
@@ -140,7 +152,7 @@ DIN_matrices <- DIN_matrices[!(names(DIN_matrices) %in% remove_samples)]
 
 
 #
-# CLUSTERING BASED ON DIN VALUES
+# CLUSTERING
 #
 
 #Determining optimal number of clusters for each sample
@@ -154,7 +166,7 @@ optimal_number_of_clusters <- foreach(sample=names(DIN_matrices), .packages="NbC
     tryCatch({(list(sample,
           length(unique(NbClust(
               DIN_matrices[[sample]][,markers],
-              max.nc=5, #Maximum number of clusters
+              max.nc= arguments$max_number_of_clusters, #Maximum number of clusters
               method="kmeans" #Using kmeans clustering
             )$Best.partition))
           )
@@ -163,6 +175,22 @@ optimal_number_of_clusters <- foreach(sample=names(DIN_matrices), .packages="NbC
         )
     
 
+  } else {
+
+    # Add column of zeros for the markers not included in the DIN matrix
+    #DIN_matrices[[sample]][, markers[!markers %in% colnames(DIN_matrices[[sample]])]] <- 0
+
+    # Generate optimal number of clusters based on the specified markers
+    tryCatch({(list(sample,
+          length(unique(NbClust(
+              DIN_matrices[[sample]][,markers[markers %in% colnames(DIN_matrices[[sample]])]],
+              max.nc=5, #Maximum number of clusters
+              method="kmeans" #Using kmeans clustering
+            )$Best.partition))
+          )
+        )},
+           error=function(e) {} #Skip sample if error
+        )
   }
 
 }
@@ -176,19 +204,6 @@ num_clusters_list <- num_clusters_list[!sapply(num_clusters_list, is.null)]
 
 
 
-# Print warning message about the samples not used for clustering
-not_clustered <- names(DIN_matrices)[!names(DIN_matrices) %in% names(num_clusters_list)]
-
-if (length(not_clustered) != 0) {
-
-  cat("\n\n**** WARNING *****\n")
-  cat("\nThe following samples were not used for clustering as data for some of the markers was unavailable\n")
-  print(not_clustered)
-
-}
-
-
-
 #Performing clustering
  output_clusters_list <- list()
  
@@ -197,7 +212,7 @@ if (length(not_clustered) != 0) {
   #Perform kmeans clustering based on the optimal number of clusters
   tryCatch({
 
-   output_clusters_list[[sample]] <- kmeans(DIN_matrices[[sample]][,markers], centers=num_clusters_list[[sample]])
+   output_clusters_list[[sample]] <- kmeans(DIN_matrices[[sample]][,markers[markers %in% colnames(DIN_matrices[[sample]])]], centers=num_clusters_list[[sample]])
 
 
   }, error=function(e){}) #Skip sample if error
@@ -237,6 +252,12 @@ cat("\n\nThe clusters detected in",
 # CLUSTER ANNOTATION
 #
 
+# Adding additional markers to the list of markers
+if (additional_markers != "") {
+    markers <- c(markers, additional_markers)
+}
+
+
 # Generating list to store the output
 annotated_samples <- vector("list", length(original_samples))
 names(annotated_samples) <- original_samples
@@ -246,19 +267,20 @@ names(annotated_samples) <- original_samples
 annotated_samples[remove_samples] <- "Low cell density"
 
 
+
 # ANNOTATING HOMOGENEOUS SAMPLES
 for (sample in homogeneous_samples) {
-
+        
         # Generate matrix with p values obtained by Mann-Withney U test  
         p_value_greater <- matrix(NA, 
-                                ncol=length(markers),
-                                nrow=length(markers),
-                                dimnames=list(markers,markers))
+                                ncol=length(markers[markers %in% colnames(DIN_matrices[[sample]])]),
+                                nrow=length(markers[markers %in% colnames(DIN_matrices[[sample]])]),
+                                dimnames=list(markers[markers %in% colnames(DIN_matrices[[sample]])],markers[markers %in% colnames(DIN_matrices[[sample]])]))
 
 
         # Filling the list of matrices
-        for (row in markers) {
-            for (col in markers) {
+        for (row in markers[markers %in% colnames(DIN_matrices[[sample]])]) {
+            for (col in markers[markers %in% colnames(DIN_matrices[[sample]])]) {
 
                 if(row != col) {
 
@@ -279,23 +301,23 @@ for (sample in homogeneous_samples) {
                       annotated_samples[[sample]] <- list(
 
                         type="Homogeneous",
-                        class = if (all(p_value_greater["p53", -which(colnames(p_value_greater)=="p53")] < 1e-100)) {
+                        class = if (all(p_value_greater[arguments$tumour_marker, -which(colnames(p_value_greater)==arguments$tumour_marker)] < 1e-100)) {
                                     list(type = "TUMOUR"
                                     )
 
                                 #Checking if it is an immune cluster
-                               } else if (any(p_value_greater[-which(rownames(p_value_greater)=="p53"), "p53"] < 1e-100)) {
+                               } else if (any(p_value_greater[-which(rownames(p_value_greater)==arguments$tumour_marker), arguments$tumour_marker] < 1e-100)) {
 
-                                  #Determining abundance order of the markers in the immune and mixed clusters
+                                  #Determining abundance order of the markers[markers %in% colnames(DIN_matrices[[sample]])] in the immune and mixed clusters
                                      order_vec <- colSums(
                                          p_value_greater[
-                                             -which(colnames(p_value_greater)=="p53"), 
-                                             -which(colnames(p_value_greater)=="p53")] < 0.05,
+                                             -which(colnames(p_value_greater)==arguments$tumour_marker), 
+                                             -which(colnames(p_value_greater)==arguments$tumour_marker)] < 0.05,
                                          na.rm = TRUE)
 
                                      names(order_vec) <- rownames(p_value_greater[
-                                             -which(colnames(p_value_greater)=="p53"), 
-                                             -which(colnames(p_value_greater)=="p53")])
+                                             -which(colnames(p_value_greater)==arguments$tumour_marker), 
+                                             -which(colnames(p_value_greater)==arguments$tumour_marker)])
 
                                      groups <- sort(unique(order_vec), decreasing=TRUE)
 
@@ -317,13 +339,13 @@ for (sample in homogeneous_samples) {
                                     # Determining abundance order of the markers in the immune and mixed clusters
                                      order_vec <- rowSums(
                                          p_value_greater[
-                                             -which(colnames(p_value_greater)=="p53"), 
-                                             -which(colnames(p_value_greater)=="p53")] < 0.05,
+                                             -which(colnames(p_value_greater)==arguments$tumour_marker), 
+                                             -which(colnames(p_value_greater)==arguments$tumour_marker)] < 0.05,
                                          na.rm = TRUE)
 
                                      names(order_vec) <- rownames(p_value_greater[
-                                             -which(colnames(p_value_greater)=="p53"), 
-                                             -which(colnames(p_value_greater)=="p53")])
+                                             -which(colnames(p_value_greater)==arguments$tumour_marker), 
+                                             -which(colnames(p_value_greater)==arguments$tumour_marker)])
 
                                      groups <- sort(unique(order_vec), decreasing=TRUE)
 
@@ -357,15 +379,15 @@ for (sample in original_samples[! original_samples %in% c(remove_samples, homoge
           
           # Generate list of matrices with p values obtained by Mann-Withney U test and effect size (difference of median)
           p_value_greater <- matrix(NA, 
-                                  ncol=length(markers),
-                                  nrow=length(markers),
-                                  dimnames=list(markers,markers))
+                                  ncol=length(markers[markers %in% colnames(DIN_matrices[[sample]])]),
+                                  nrow=length(markers[markers %in% colnames(DIN_matrices[[sample]])]),
+                                  dimnames=list(markers[markers %in% colnames(DIN_matrices[[sample]])],markers[markers %in% colnames(DIN_matrices[[sample]])]))
           
 
           # Filling the list of matrices
 
-          for (row in markers) {
-              for (col in markers) {
+          for (row in markers[markers %in% colnames(DIN_matrices[[sample]])]) {
+              for (col in markers[markers %in% colnames(DIN_matrices[[sample]])]) {
                   if(row != col) {
                       p_value_greater[row, col] <- wilcox.test(
                           
@@ -387,22 +409,22 @@ for (sample in original_samples[! original_samples %in% c(remove_samples, homoge
         clusters=lapply(sort(unique(unname(output_clusters_list[[sample]]$cluster))), function(clus) {
 
             #Checking if it is a tumour cluster
-            if (all(list_of_p_values[[clus]]["p53", -which(colnames(list_of_p_values[[clus]])=="p53")] < 1e-100)) {
+            if (all(list_of_p_values[[clus]][arguments$tumour_marker, -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker)] < 1e-100)) {
                 list(type = "TUMOUR")
 
             #Checking if it is an immune cluster
-            } else if (any(list_of_p_values[[clus]][-which(rownames(list_of_p_values[[clus]])=="p53"), "p53"] < 1e-100)) {
+            } else if (any(list_of_p_values[[clus]][-which(rownames(list_of_p_values[[clus]])==arguments$tumour_marker), arguments$tumour_marker] < 1e-100)) {
 
              # Determining abundance order of the markers in the immune and mixed clusters
                  order_vec <- rowSums(
                      list_of_p_values[[clus]][
-                         -which(colnames(list_of_p_values[[clus]])=="p53"), 
-                         -which(colnames(list_of_p_values[[clus]])=="p53")] < 0.05,
+                         -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker), 
+                         -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker)] < 0.05,
                      na.rm = TRUE)
 
                  names(order_vec) <- rownames(list_of_p_values[[clus]][
-                         -which(colnames(list_of_p_values[[clus]])=="p53"), 
-                         -which(colnames(list_of_p_values[[clus]])=="p53")])
+                         -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker), 
+                         -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker)])
 
                  groups <- sort(unique(order_vec), decreasing=TRUE)
 
@@ -424,13 +446,13 @@ for (sample in original_samples[! original_samples %in% c(remove_samples, homoge
                 # Determining abundance order of the markers in the immune and mixed clusters
                  order_vec <- rowSums(
                      list_of_p_values[[clus]][
-                         -which(colnames(list_of_p_values[[clus]])=="p53"), 
-                         -which(colnames(list_of_p_values[[clus]])=="p53")] < 0.05,
+                         -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker), 
+                         -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker)] < 0.05,
                      na.rm = TRUE)
 
                  names(order_vec) <- rownames(list_of_p_values[[clus]][
-                         -which(colnames(list_of_p_values[[clus]])=="p53"), 
-                         -which(colnames(list_of_p_values[[clus]])=="p53")])
+                         -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker), 
+                         -which(colnames(list_of_p_values[[clus]])==arguments$tumour_marker)])
 
                  groups <- sort(unique(order_vec), decreasing=TRUE)
 
@@ -455,6 +477,8 @@ for (sample in original_samples[! original_samples %in% c(remove_samples, homoge
 
 # Saving output list
 saveRDS(annotated_samples, paste0(arguments$path_output, arguments$output_name, ".rds"))
+saveRDS(output_clusters_list,  paste0(arguments$path_output, arguments$output_name, "_clustered_cells.rds"))
+
 
 cat("\n\n****************\n")
 cat("Process finished!\n")
