@@ -48,14 +48,38 @@ argument_list <- list(
 
     make_option(c("-o", "--spe_objects"), 
                 type="character", 
-                help="Comma separated spe objects' directories.",
+                help="Semicolon separated spe objects' directories.",
                 metavar="[COMMA_SEPARATED_PATHS]"),
+
+    make_option(c("-g", "--group_immune_cells"), 
+                type="logical", 
+                default=FALSE,
+                help="If the immune cells should be grouped in the analysis set this argument to TRUE [default %default]",
+                metavar="[TRUE/FALSE]"),
+
+    make_option(c("-t", "--tumour_phenotypes"), 
+                type="character", 
+                help="Comma separated tumour phenotypes to be used if the immune cells are grouped [default %default]",
+                metavar="[tumour_marker]"),
     
     make_option(c("-c", "--cores"), 
-              type="integer", 
-              default=1,  
-              help="Number of cores to be used to run the program [default %default]",
-              metavar = "[NUMBER]"))
+               type="integer", 
+               default=1,  
+               help="Number of cores to be used to run the program [default %default]",
+               metavar = "[NUMBER]"),
+              
+    make_option(c("-r", "--radius"),
+                type="integer",
+                default=100,
+                help="Radius of the neighborhood to calculate the density in the neighborhood (DIN) [default %default]",
+                metavar="[NUMBER]"),
+
+    make_option(c("-n", "--output_name"), 
+                type="character", 
+                help="Name of the output file [default %default]",
+                default="all_samples_DIN",
+                metavar="[OUTPUT_NAME]"))
+
 
 arguments <- parse_args(OptionParser(option_list=argument_list, 
                                     description="This program generates DIN values of the analysed samples."))
@@ -79,7 +103,7 @@ registerDoParallel(cl)
 
 print("Reading SPE objects...")
 
-spe_names <- strsplit(arguments$spe_objects, split=",")[[1]]
+spe_names <- strsplit(arguments$spe_objects, split=";")[[1]]
 
 #Storing spe objects in a list. Using parLapply to parallelize the process
 
@@ -103,7 +127,7 @@ names(file_list) <- sapply(file_name_list, function(item) item[[1]])
 calculate_density_matrix <- function(spe_object, radius) {
 
             #Getting all the markers included in the spe object
-            markers <- unique(spe_object$"Cell.Type")
+            markers <- unique(spe_object$"Phenotype")
 
 
             #Generating matrix to store the denisty in the neighborhood (DIN) values
@@ -114,10 +138,10 @@ calculate_density_matrix <- function(spe_object, radius) {
             DIN_matrix <- matrix(NA, nrow=number_of_rows, ncol=number_of_columns)
 
             rownames(DIN_matrix) <- spe_object$"Cell.ID"
-            colnames(DIN_matrix) <- c("X_coor", "Y_coor", "Phenotype", unique(spe_object$"Cell.Type"))
+            colnames(DIN_matrix) <- c("X_coor", "Y_coor", "Phenotype", unique(spe_object$"Phenotype"))
 
             #Generating data frame with all the cellIDs, Cell.Type and coordinates
-            spatial_data <- cbind(spe_object@colData[, c("Cell.ID", "Cell.Type")], spatialCoords(spe_object))
+            spatial_data <- cbind(spe_object@colData[, c("Cell.ID", "Phenotype")], spatialCoords(spe_object))
 
 
             #Getting spatial coordinates
@@ -154,14 +178,14 @@ calculate_density_matrix <- function(spe_object, radius) {
 
                 #Filtering the cells not included in the area of interest and that do not
                 #belong to the category of interest. Counting the cells that match the conditions.
-                return(nrow(spatial_data[spatial_data$"Distance" <= radius^2 & spatial_data$"Cell.Type" == cell_type,])/(pi*radius^2))
+                return(nrow(spatial_data[spatial_data$"Distance" <= radius^2 & spatial_data$"Phenotype" == cell_type,])/(pi*radius^2))
                 
                 }
             )
 
             DIN_matrix <- as.data.frame(DIN_matrix)
 
-            DIN_matrix$"Phenotype" <- spe_object$"Cell.Type"
+            DIN_matrix$"Phenotype" <- spatial_data$"Phenotype"
 
             }
 
@@ -175,8 +199,8 @@ print("Calculating density in the neighborhood matrices...")
 density_matrix_list <- foreach(s=spe_names, .packages=c("SPIAT")) %dopar% {
   
   # Generating list with sample id and dnsity matrix
-  list(strsplit(strsplit(s, "/")[[1]][4], "_for.spiat")[[1]][1],
-       calculate_density_matrix(file_list[[s]], radius=100)
+  list(strsplit(s, "/")[[1]][3],
+       calculate_density_matrix(file_list[[s]], radius=arguments$radius)
       )
 
 }
@@ -188,6 +212,32 @@ stopCluster(cl)
 output_list <- lapply(density_matrix_list, function(item) item[[2]])
 names(output_list) <- sapply(density_matrix_list, function(item) item[[1]])
 
+
+#
+# ADDING DENSITIES OF IMMUNE CELLS IF REQUIRED
+#
+
+if (arguments$group_immune_cells) {
+  
+  print("Grouping immune cells...")
+  
+  #Getting the tumour marker
+  tumour_markers <- strsplit(arguments$tumour_marker, split=",")[[1]]
+  
+  
+  #Creating a new column in the output list to store the immune cells' densities
+  for (sample in names(output_list)) {
+
+      #Getting the immune cells
+    immune_cells <- unique(output_list[[sample]]$"Phenotype")
+    immune_cells <- immune_cells[!immune_cells %in% tumour_markers]
+
+    output_list[[sample]]$"Immune" <- rowSums(output_list[[sample]][immune_cells])
+    
+  }
+  
+}
+
 #
 # SAVING OUTPUT FILES
 #
@@ -196,7 +246,9 @@ print("Saving output file...")
 
 # Saving output file
 
-saveRDS(output_list, file="all_samples_DIN.rds")
+output_file <- paste0(arguments$output_name, ".rds")
+
+saveRDS(output_list, output_file)
 
 # Print message to show the end of the execution
 cat("\n\n**********************\n")
