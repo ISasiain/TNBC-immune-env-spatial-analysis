@@ -49,24 +49,6 @@ done;
 
 * Generating spatial experiment objects (Run in corsaire)
 
-``` bash
-conda install -c conda-forge r-optparse;
-conda install -c conda-forge r-magick;
-conda install -c conda-forge r-biocmanager;
-conda install -c bioconda bioconductor-spatialexperiment;
-conda install -c conda-forge r-terra;
-conda install -c r r-raster;
-conda install -c conda-forge r-ggplot2;
-conda install -c conda-forge r-r.utils;
-conda install r-alphahull;
-conda install -c conda-forge r-tidyr;
-conda install -c bioconda bioconductor-complexheatmap;
-
-
-
-```R
-install.packages("plotly")
-```
 
 ```bash
 cd /home/Illumina/Iñaki_Sasiain/immune_spatial/spe_objects; 
@@ -78,12 +60,15 @@ Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3,CD20,H2AXp
 
 * TILs and survival
 
-* C
+
+* Counts and survival
+
 
 
 
 3. Analysing metrics in Basal or NonBasal TNBC
 
+* Counts, distances and densities
 
 4. Anaysing clustering
 
@@ -113,7 +98,7 @@ Rscript ../../scripts/cluster_classificator.r -d ../DIN/all_samples_DIN.rds -l .
 
 
 # Merging the scripts in a single one.
-nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 30;
+nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 30;
 
 # Comparing the effect of the homogenity cutoff
 thresholds=(0.9 1 1.1 1.2 1.3 1.4 1.5)
@@ -130,9 +115,18 @@ for num in ${thresholds[@]};
     do Rscript ../../scripts/clustering_analysis.r -d ../DIN/all_samples_DIN.rds -c optimal_clusters.rds -s ${num}_cutoff.clustering.rds -n ../../annotation/supplData_withimages.csv -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -o ${num};
     done;
 
-
-
-
 ```
 
 ### ANALYSING OF VECTRA VERIS MULTIPLEX IHC DATA
+
+
+1.  Training the StarDist segementation
+
+# Getting image crops from DAPI channel of cores
+
+
+
+
+'''
+python CD68_preprocessing.py -i ./cores/ -o ./retraining_cellpose/
+'''
