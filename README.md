@@ -90,6 +90,15 @@ nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD
 
 #### Analysing PhenoImager mIHC images
 
+1. Running cell segmentation and phenotyping
+
+```bash
+# Getting paths to tif files
+files=$(find SCAN-B_TNBC_TMA_1A/* | tr "\n" ":");
+
+# Running cell segmentation and phenotyping
+python ../segmentation_and_phenotyping.py -p ${files::-1} -o ./processed_images/;
+```
 
 
 
