@@ -85,7 +85,7 @@ Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 75 -n r75_DI
 
 ```bash
 # Determining and annotating clusters
-nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 33 -t p53;
+nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 33 -t p53 -M 2.4;
 ```
 
 #### Analysing PhenoImager mIHC images
@@ -94,10 +94,10 @@ nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD
 
 ```bash
 # Getting paths to tif files
-files=$(find SCAN-B_TNBC_TMA_1A/* | tr "\n" ":");
+files=$(find /media/isc/Data1/PhenoImager_cores/SCAN-B_TNBC_TMA_1A/*]_component_data.tif | tr "\n" ":");
 
 # Running cell segmentation and phenotyping
-python ../segmentation_and_phenotyping.py -p ${files::-1} -o ./processed_images/;
+python segmentation_and_phenotyping.py -p ${files::-1} -o ./media/isc/Data1/Processed_cores/SCAN-B_TNBC_TMA_1A/;
 ```
 
 2. Analysing obtained results
