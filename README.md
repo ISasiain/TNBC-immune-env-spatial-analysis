@@ -1,37 +1,50 @@
 # Spatial analysis of the tumour immune microenvironment in Triple-Negative Breast Cancer
 
-* Author: Iñaki Sasiain Casado
+* Author: Iñaki Sasiain Casado (inaki.sasiain_casado@med.lu.se)
 * Supervisors: Johan Staaf and Suze Roostee
+* Master's Programme in Bioinformatics
+* BINP 51 (45 ECTS)
 
-### ANALYSING TMArQ PROCESSED SINGLE-PLEX SAMPLES
 
-1. Generating spatial_experiment files from coordinates files.
+### WORKFLOW
 
-* Preprocessing files' names to homogenize their format
+### SCRIPTS
+
+### EXPERIMENTAL PROCEDURE
+
+#### Analysing TMArQ processed sIHC data
+
+1. Generating Spatial Experiment (SPE) objects from coordinates files
+
+* Preprocessing file names to homogenize their format
 
 ```bash
+# CD8+ cell cordinate files
 for file in $(ls ./*_coordinates.txt | grep "CD8_"); 
     do new_filename=$(echo ${file} | sed 's/CD8_/CD8/');
        mv ./${file} ./${new_filename};
     done;
 
+
+# CD4+ cell cordinate files
 for file in $(ls ./*_coordinates.txt | grep "CD4_"); 
     do new_filename=$(echo ${file} | sed 's/CD4_/CD4/');
        mv ./${file} ./${new_filename};
     done;
 
+
+# CD3+ cell cordinate files
 for file in $(ls ./*_coordinates.txt | grep "CD3_"); 
     do new_filename=$(echo ${file} | sed 's/CD3_/CD3/');
        mv ./${file} ./${new_filename};
     done;
-
 
 for file in $(ls ./*_coordinates.txt | grep "CD3TNBC"); 
     do new_filename=$(echo ${file} | sed 's/CD3TNBC/CD3_TNBC/');
        mv ./${file} ./${new_filename};
     done;
 
-
+# Removing spaces
 for file in *\ *; do
     # Check if the file has a space in its name
     if [[ -f "$file" ]]; then
@@ -46,15 +59,37 @@ for file in *\ *; do
     fi
 done;
 ```
-
-* Generating spatial experiment objects (Run in corsaire)
-
+* Generating SPE objects (It was run on the server)
 
 ```bash
 cd /home/Illumina/Iñaki_Sasiain/immune_spatial/spe_objects; 
 
 Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3,CD20,H2AXp,CKPAN -a ../annotation/supplData_withimages.csv -p ../coordinates/;
 ```
+
+2. Determining and annotating cell neighbourhoods from the spe objects
+
+
+
+#### Analysing PhenoImager mIHC images
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 2. Preliminary data analysis
 
@@ -78,10 +113,18 @@ Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3,CD20,H2AXp
 cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/DIN; 
 
 #Create a variable with the comma separated paths to spe objects
-spe_paths=$(find ../../spe_objects/* | tr "\n" ",");
+spe_paths=$(find ../../spe_objects/* | tr "\n" ";");
 
-#Generating DIN matrices for all the samples
-Rscript ../../scripts/DIN_calculator.r -c 40 -o ${spe_paths::-1};
+#Generating DIN matrices for all the samples. Using 75 pixels as the radius
+Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 75 -n r75_DIN;
+
+# Determining and annotating clusters
+nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 30 -t p53 ;
+
+
+
+
+
 
 #Identifying cell clusters
 cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/detected_clusters;
