@@ -69,7 +69,24 @@ Rscript ../scripts/create_spe_objects.r -m p53,CD3,CD4,CD68,CD8,FOXP3,CD20,H2AXp
 
 2. Determining and annotating cell neighbourhoods from the spe objects
 
+* Determining density in the neighbourhood (DIN) matrices 
 
+```bash
+cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/DIN; 
+
+#Create a variable with the comma separated paths to spe objects
+spe_paths=$(find ../../spe_objects/* | tr "\n" ";");
+
+#Generating DIN matrices for all the samples. Using 75 pixels as the radius
+Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 75 -n r75_DIN;
+```
+
+* Running cluster detection and annotation
+
+```bash
+# Determining and annotating clusters
+nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 30 -t p53 ;
+```
 
 #### Analysing PhenoImager mIHC images
 
