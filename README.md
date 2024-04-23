@@ -100,6 +100,16 @@ files=$(find SCAN-B_TNBC_TMA_1A/* | tr "\n" ":");
 python ../segmentation_and_phenotyping.py -p ${files::-1} -o ./processed_images/;
 ```
 
+2. Analysing obtained results
+
+3. Determining and annotating cell neighborhoods
+
+* Detecting stromal/tumour areas
+
+* Unsupervised neighbourhood detection
+
+* Analysing determined spatial thresholds
+
 
 
 
@@ -187,15 +197,3 @@ for num in ${thresholds[@]};
 ```
 
 ### ANALYSING OF VECTRA VERIS MULTIPLEX IHC DATA
-
-
-1.  Training the StarDist segementation
-
-# Getting image crops from DAPI channel of cores
-
-
-
-
-'''
-python CD68_preprocessing.py -i ./cores/ -o ./retraining_cellpose/
-'''
