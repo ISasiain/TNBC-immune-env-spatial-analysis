@@ -85,7 +85,7 @@ Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 75 -n r75_DI
 
 ```bash
 # Determining and annotating clusters
-nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 30 -t p53 ;
+nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 33 -t p53;
 ```
 
 #### Analysing PhenoImager mIHC images
@@ -155,7 +155,7 @@ spe_paths=$(find ../../spe_objects/* | tr "\n" ";");
 Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 75 -n r75_DIN;
 
 # Determining and annotating clusters
-nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 30 -t p53 ;
+rscript ../../scripts/clustering.r -d ../DIN/r75_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 30 -t p53 -n r75_clusters;
 
 
 
