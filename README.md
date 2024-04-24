@@ -90,7 +90,9 @@ nohup Rscript ../../scripts/clustering.r -d ../DIN/r75_DIN.rds -m p53,CD3,CD20,C
 
 3. Analysing results
 
-* 
+* Analysis of heterogeneoous cores. 
+
+* Analysis of homogeneous cores.
 
 #### Analysing PhenoImager mIHC images
 
