@@ -274,18 +274,13 @@ for path_to_image in paths_to_images:
         # The "Others" phenotype is assigned if the cell does not express any of the markers
         if len(positive_markers) == 0: 
 
-            # If FOXP3 is expressed, the phenotype is assigned to Other_FOXP3
-            if pos_FOXP3:
-                cells_df.loc[cell, "Phenotype"] = "Other_FOXP3"
-
-            else:
-                cells_df.loc[cell, "Phenotype"] = "Other"
+            cells_df.loc[cell, "Phenotype"] = "Other"
 
         # If a single marker is expressed, the phenotype is assigned to the marker
         elif len(positive_markers) == 1:
 
             # Determine if FOXP3 is expressed
-            if pos_FOXP3:
+            if positive_markers[0] in ["CD4", "CD8"] and pos_FOXP3:
                 cells_df.loc[cell, "Phenotype"] = positive_markers[0] + "_FOXP3"
             else:
                 cells_df.loc[cell, "Phenotype"] = positive_markers[0]
@@ -302,11 +297,7 @@ for path_to_image in paths_to_images:
             # If there are no markers with at least 30% of positive pixels, assign the phenotype to Others, else assign the phenotype to the marker with the highest intensity
             if len(positive_markers) == 0:
 
-                if pos_FOXP3:
-                    cells_df.loc[cell, "Phenotype"] = "Other_FOXP3"
-
-                else:
-                    cells_df.loc[cell, "Phenotype"] = "Other"
+                cells_df.loc[cell, "Phenotype"] = "Other"
 
             else:
                 
@@ -314,7 +305,7 @@ for path_to_image in paths_to_images:
                 main_marker = max(positive_markers, key=lambda x: cells_df.loc[cell, x])
 
                 # Determine if FOXP3 is expressed
-                if pos_FOXP3:
+                if main_marker in ["CD4", "CD8"] and pos_FOXP3:
                     cells_df.loc[cell, "Phenotype"] = main_marker + "_FOXP3"
                 else:
                     cells_df.loc[cell, "Phenotype"] = main_marker
