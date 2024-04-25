@@ -116,7 +116,6 @@ python segmentation_and_phenotyping.py -p ${files::-1} -o ./media/isc/Data1/Proc
 
 ```bash
 # Transforming files from every slide into spe objects. 
-
 blocks=("SCAN-B_TNBC_TMA_1A" "SCAN-B_TNBC_TMA_2A" "SCAN-B_TNBC_TMA_3A" "SCAN-B_TNBC_TMA_4A" "SCAN-B_TNBC_TMA_5A")
 
 for block in ${blocks[@]};
@@ -126,12 +125,10 @@ for block in ${blocks[@]};
 # Calculating DIN matrices per core
 spes=$(find ../spe_objects/* | tr "\n" ";");
 
-#Running DIN calculator
 Rscript ../../../scripts/DIN_calculator.r -o ${spes} -g FALSE -r 75 -n r75_all_markers -c 33;
 
 # Clustering cores
-
-
+Rscript ../../../scripts/clustering.r -t PAN-CK -d ../DIN_matrices/r75_all_markers.rds -m PAN-CK,CD4,CD8,CD20 -a CD4_FOXP3,CD8_FOXP3,Other -c 33 -n r75_all_marker_clusters;
 ```
 
 * Analysing determined spatial thresholds
