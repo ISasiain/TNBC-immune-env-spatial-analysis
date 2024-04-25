@@ -99,7 +99,7 @@ arguments <- parse_args(OptionParser(option_list=argument_list,
 #
 
 # Loading input file
-DIN_matrices <- readRDS(arguments$DIN_matrix_list)[seq(1,99)]
+DIN_matrices <- readRDS(arguments$DIN_matrix_list)
 original_samples <- names(DIN_matrices)
 
 # Generating vector of markers 
@@ -146,14 +146,36 @@ if (length(remove_samples) != 0) {
 
 }
 
+# Checking and removing samples that do not contain any tumour marker positive cell
+without_tumour_samples <- c()
+for (sample in names(DIN_matrices)) {
+    
+    if (!arguments$tumour_marker %in% DIN_matrices[[sample]]$Phenotype) {
+        without_tumour_samples <- c(without_tumour_samples, sample)
+    }
+    
+}
 
-# Removing samples with low cell density
+# Print warning message about the dismissed samples
+if (length(without_tumour_samples) != 0) {
+
+  cat("\n\n**** WARNING *****\n")
+  cat("\nThe following cores did not contain any tumour cell; therefore will be dismissed.\n")
+  print(without_tumour_samples)
+
+}
+
+
+# Removing samples with low cell density or without tumour cells
 DIN_matrices <- DIN_matrices[!(names(DIN_matrices) %in% remove_samples)]
-
+DIN_matrices <- DIN_matrices[!(names(DIN_matrices) %in% without_tumour_samples)]
 
 #
 # CLUSTERING
 #
+
+cat("\nFinding optimal number of clusters...\n")
+
 
 #Determining optimal number of clusters for each sample
 optimal_number_of_clusters <- foreach(sample=names(DIN_matrices), .packages="NbClust") %dopar% {
@@ -245,7 +267,8 @@ names(annotated_samples) <- original_samples
 # ANNOTATING SAMPLES WITH LOW CELL DENSITY
 annotated_samples[remove_samples] <- "Low cell density"
 
-
+# ANNOTATING SAMPLES WITHOUT TUMOUR CELLS
+annotated_samples[without_tumour_samples] <- "Without tumour cells"
 
 # ANNOTATING HOMOGENEOUS SAMPLES
 for (sample in homogeneous_samples) {
