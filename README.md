@@ -112,7 +112,26 @@ python segmentation_and_phenotyping.py -p ${files::-1} -o ./media/isc/Data1/Proc
 
 * Detecting stromal/tumour areas
 
-* Unsupervised neighbourhood detection
+* Unsupervised neighbourhood detection (Run in corsaire)
+
+```bash
+# Transforming files from every slide into spe objects. 
+
+blocks=("SCAN-B_TNBC_TMA_1A" "SCAN-B_TNBC_TMA_2A" "SCAN-B_TNBC_TMA_3A" "SCAN-B_TNBC_TMA_4A" "SCAN-B_TNBC_TMA_5A")
+
+for block in ${blocks[@]};
+    do Rscript spe_objects_from_vectra.r -m PAN.CK,CD4,CD8,CD20,CD68,FOXP3 -i /media/isc/Data1/Processed_cores/${block}/ -o /media/isc/Data1/spe_objects/;
+    done;
+
+# Calculating DIN matrices per core
+
+
+
+
+# Clustering cores
+
+
+```
 
 * Analysing determined spatial thresholds
 
