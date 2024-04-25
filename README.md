@@ -124,9 +124,10 @@ for block in ${blocks[@]};
     done;
 
 # Calculating DIN matrices per core
+spes=$(find ../spe_objects/* | tr "\n" ";");
 
-
-
+#Running DIN calculator
+Rscript ../../../scripts/DIN_calculator.r -o ${spes} -g FALSE -r 75 -n r75_all_markers -c 33;
 
 # Clustering cores
 
