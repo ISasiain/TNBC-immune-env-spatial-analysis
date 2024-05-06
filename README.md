@@ -88,11 +88,12 @@ Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 75 -n r75_DI
 nohup Rscript ../../scripts/clustering.r -d ../DIN/r75_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 33 -t p53 -n r75_TMArQ_clusters;
 ```
 
-3. Analysing results
+3. Analysing results. Generating plots
 
-* Analysis of heterogeneoous cores. 
+```bash
+Rscript ../../scripts/clustering_analysis.r -d ../DIN/all_samples_DIN.rds -c ../detected_clusters/optimal_clusters.rds -s ../detected_clusters/number_optimal_clusters.rds  -n ../../annotation/supplData_withimages.csv -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -o test;
+```
 
-* Analysis of homogeneous cores.
 
 #### Analysing PhenoImager mIHC images
 
@@ -106,13 +107,7 @@ files=$(find /media/isc/Data1/PhenoImager_cores/SCAN-B_TNBC_TMA_1A/*]_component_
 python segmentation_and_phenotyping.py -p ${files::-1} -o ./media/isc/Data1/Processed_cores/SCAN-B_TNBC_TMA_1A/;
 ```
 
-2. Analysing obtained results
-
-3. Determining and annotating cell neighborhoods
-
-* Detecting stromal/tumour areas
-
-* Unsupervised neighbourhood detection (Run in corsaire)
+2. Transforming results into SPE objects
 
 ```bash
 # Transforming files from every slide into spe objects. 
@@ -121,14 +116,18 @@ blocks=("SCAN-B_TNBC_TMA_1A" "SCAN-B_TNBC_TMA_2A" "SCAN-B_TNBC_TMA_3A" "SCAN-B_T
 for block in ${blocks[@]};
     do Rscript spe_objects_from_vectra.r -m PAN.CK,CD4,CD8,CD20,CD68,FOXP3 -i /media/isc/Data1/Processed_cores/${block}/ -o /media/isc/Data1/spe_objects/;
     done;
+```
 
+3. Clustering analysis.
+
+```bash
 # Calculating DIN matrices per core
 spes=$(find ../spe_objects/* | tr "\n" ";");
 
-Rscript ../../../scripts/DIN_calculator.r -o ${spes} -g FALSE -r 75 -n r75_all_markers -c 33;
+Rscript ../../../scripts/DIN_calculator.r -o ${spes} -g FALSE -r 100 -n r75_all_markers -c 33;
 
 # Clustering cores
-Rscript ../../../scripts/clustering.r -t PAN-CK -d ../DIN_matrices/r75_all_markers.rds -m PAN-CK,CD4,CD8,CD20 -a CD4_FOXP3,CD8_FOXP3,Other -c 33 -n r75_all_marker_clusters;
+Rscript ../../../scripts/clustering.r -t PAN-CK -d ../DIN_matrices/r100_all_markers.rds -m PAN-CK,CD4,CD8,CD20 -a CD4_FOXP3,CD8_FOXP3,Other -c 33 -n r75_all_marker_clusters;
 ```
 
 * Analysing determined spatial thresholds
