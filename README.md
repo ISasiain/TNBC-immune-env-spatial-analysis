@@ -78,14 +78,15 @@ cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/DIN;
 spe_paths=$(find ../../spe_objects/* | tr "\n" ";");
 
 #Generating DIN matrices for all the samples. Using 75 pixels as the radius
-Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 75 -n r75_DIN;
+nohup Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 100 -n r100_DIN_sIHC;
 ```
 
 * Running cluster detection and annotation
 
 ```bash
+cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/detected_clusters; 
 # Determining and annotating clusters
-nohup Rscript ../../scripts/clustering.r -d ../DIN/r75_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 33 -t p53 -n r75_TMArQ_clusters;
+nohup Rscript ../../scripts/clustering.r -d ../DIN/r100_DIN_sIHC.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 33 -t p53 -n r100_DIN_sIHC_clusters;
 ```
 
 3. Analysing results. Generating plots
