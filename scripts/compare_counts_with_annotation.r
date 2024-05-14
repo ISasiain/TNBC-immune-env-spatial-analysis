@@ -89,13 +89,15 @@ my_comparison <- list(c("0", "1"),c("1","2"), c("2","3"))
 
 
 ggplot(data=na.omit(data.frame(vector_of_counts, vector_of_CD20_path)), aes(x=vector_of_CD20_path, y=vector_of_counts)) +
-         geom_violin(width=1, aes(fill=vector_of_CD20_path)) +
-         geom_jitter(size=0.75, width=0.08) +
-         geom_boxplot(width=0.075) +
-         labs(fill="Pathologist's score", x = "CD20 pathologist's score", y = "log B lymphocyte counts") +
-         annotate("text", x=3.75, y=1, label=paste0("Kruskal-Wallis p value: ", signif(kruskal_res$p.value, 2))) +
-         stat_compare_means(pairwise_res, comparisons = my_comparison) +
-         theme_classic()
+  geom_violin(width=1, aes(fill=vector_of_CD20_path)) +
+  geom_jitter(size=0.75, width=0.08) +
+  geom_boxplot(width=0.075) +
+  labs(fill="Pathologist's score", x = "CD20 pathologist's score", y = "log B lymphocyte counts") +
+  annotate("text", x=3.75, y=0.6, label=paste0("Kruskal-Wallis p value:\n", signif(kruskal_res$p.value, 2)), size = 7) + # Adjust size here
+  stat_compare_means(pairwise_res, comparisons = my_comparison, size=7) +
+  theme_classic()
+
+        
 
 
 # Analysing the effect of cell counts in survival
@@ -330,7 +332,7 @@ dataframe_long <- mIHC_counts %>%
 dataframe_long$Count <- as.numeric(dataframe_long$Count)
 
 # Create the plot
-p1 <- ggplot(data = dataframe_long, aes(x = CORE_ID, fill = Phenotype, y = Count)) +
+p1 <- ggplot(data = dataframe_long[!is.na(dataframe_long$TILs),], aes(x = CORE_ID, fill = Phenotype, y = Count)) +
   geom_bar(position = "stack", stat = "identity") +
   scale_x_discrete(guide = guide_axis(angle = -25)) +
   xlab("Cores") +
@@ -338,7 +340,7 @@ p1 <- ggplot(data = dataframe_long, aes(x = CORE_ID, fill = Phenotype, y = Count
   theme(axis.text.x = element_text(size = 0))
 
 # Create the second plot with filled bars
-p2 <- ggplot(data = dataframe_long, aes(x = CORE_ID, fill = Phenotype, y = Count)) +
+p2 <- ggplot(data = dataframe_long[!is.na(dataframe_long$TILs),], aes(x = CORE_ID, fill = Phenotype, y = Count)) +
   geom_bar(position = "fill", stat = "identity") +
   scale_x_discrete(guide = guide_axis(angle = -25)) +
   xlab("Cores") +
@@ -349,6 +351,7 @@ p2 <- ggplot(data = dataframe_long, aes(x = CORE_ID, fill = Phenotype, y = Count
 print(p1)
 
 print(p2)
+
 
 
 # Adding TILs to barplot
@@ -384,15 +387,23 @@ mIHC_counts$PAM50 <- as.factor(annotation_file[mIHC_counts$TMArQ_CORE_ID, "PAM50
 mIHC_counts$subtypes_7 <- as.factor(annotation_file[mIHC_counts$TMArQ_CORE_ID, "TNBCtype_org"])
 mIHC_counts$subtypes_4 <- as.factor(annotation_file[mIHC_counts$TMArQ_CORE_ID, "TNBCtype4_n235_notPreCentered"])
 
+# Merging PAM50 annotations
+mIHC_counts$PAM50 <- sapply(mIHC_counts$PAM50, function(val) {if (is.na(val)) {NA}
+                                                              else if (val=="Basal") {"Basal"} 
+                                                              else if (val == "unclassified") {"Unclassified"}
+                                                              else {"Non Basal"}})
 
 
-annotations_left <- rowAnnotation(TILs=mIHC_counts$TILs,
-                             ASCAT_purity=mIHC_counts$ASCAT,
-                             HRD_status=mIHC_counts$HRD,
-                             PAM50_subtype=mIHC_counts$PAM50,
-                             Original_subtypes=mIHC_counts$subtypes_7,
-                             IM_status=mIHC_counts$IMstatus,
-                             Refined_subtypes=mIHC_counts$subtypes_4)
+annotations_left <- rowAnnotation(TILs = mIHC_counts$TILs,
+                                  HRD_status = mIHC_counts$HRD,
+                                  PAM50_subtype = mIHC_counts$PAM50,
+                                  IM_status = mIHC_counts$IMstatus,
+                                  Refined_subtypes = mIHC_counts$subtypes_4, 
+                                  col = list(HRD_status = c("high" = "salmon", "low/inter" = "seagreen1"),
+                                             IM_status = c("0" = "#FFFFFF", "1" = "#000000"),
+                                             PAM50_subtype = c("Basal" = "#FF5733", "Non Basal" = "#1E90FF", "Unclassified" = "#F5F5DC"),
+                                             Refined_subtypes = c("BL1" = "#FF0000", "BL2" = "#FFA500", "LAR" = "#FFFF00", "M" = "#32CD32")))
+
 
 annotations_right <- rowAnnotation(CD8_clusters=mIHC_counts$CD8_clusters,
                                    CD20_clusters=mIHC_counts$CD20_clusters,
@@ -403,12 +414,14 @@ annotations_right <- rowAnnotation(CD8_clusters=mIHC_counts$CD8_clusters,
                                    Homogeneous_immune=mIHC_counts$HImm_clusters,
                                    Homogeneous_mixed=mIHC_counts$HMix_clusters)
 
+
 Heatmap(log(mIHC_counts[,c("CD4", "CD8", "CD20", "CD4_FOXP3", "CD8_FOXP3", "PAN.CK", "Other")]+1),
         name= "Log cell counts",
         left_annotation = annotations_left,
         right_annotation = annotations_right,
         cluster_columns = FALSE,
-        show_row_names = FALSE)
+        show_row_names = FALSE,
+        clustering_distance_rows = "euclidea")
 
 
 # Combine data from the 2 different cores of the same sample
@@ -548,10 +561,8 @@ sample_counts_df$Lehman_7 <- sapply(rownames(sample_counts_df), function(id) ann
 
 # Defining annnotation columns for the heatmap
 annotations <- rowAnnotation(TILs=sample_counts_df$TILs,
-                             ASCAT_purity=sample_counts_df$ASCAT,
                              HRD_status=sample_counts_df$HRD_st,
                              PAM50_subtype=sample_counts_df$PAM50,
-                             Original_subtypes=sample_counts_df$Lehman_7,
                              IM_status=sample_counts_df$IMstatus,
                              Refined_subtypes=sample_counts_df$Lehman_4)
 
@@ -598,32 +609,32 @@ survivalAnalysis::forest_plot(result)
 # Effect of T cyt
 cutoff <- mean(sample_counts_df$CD8)
 surv_data$Tcyt_status <- as.factor(sapply(surv_data$CD8, function(val) {if (val > cutoff) {"high"} else {"low"}}))
-ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Tcyt_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Tcyt_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE, ylab = "IDFS probability")
 
 # Effect of T h
 cutoff <- mean(sample_counts_df$CD4)
 surv_data$Th_status <- as.factor(sapply(surv_data$CD4, function(val) {if (val > cutoff) {"high"} else {"low"}}))
-ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Th_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Th_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE, ylab = "IDFS probability")
 
 # Effect of B
 cutoff <- mean(sample_counts_df$CD20)
 surv_data$B_status <- as.factor(sapply(surv_data$CD20, function(val) {if (val > cutoff) {"high"} else {"low"}}))
-ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ B_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ B_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE, ylab = "IDFS probability")
 
 # Effect of Treg_cd4
 cutoff <- mean(sample_counts_df$CD4_FOXP3)
 surv_data$Treg_cd4_status <- as.factor(sapply(surv_data$CD4_FOXP3, function(val) {if (val > cutoff) {"high"} else {"low"}}))
-ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Treg_cd4_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Treg_cd4_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE, ylab = "IDFS probability")
 
 # Effect of Treg_cd8
 cutoff <- mean(sample_counts_df$CD8_FOXP3)
 surv_data$Treg_cd8_status <- as.factor(sapply(surv_data$CD8_FOXP3, function(val) {if (val > cutoff) {"high"} else {"low"}}))
-ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Treg_cd8_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval=TRUE)
+ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Treg_cd8_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval=TRUE, ylab = "IDFS probability")
 
 # Effect of CD68
 cutoff <- mean(sample_counts_df$CD68)
 surv_data$Mac_status <- as.factor(sapply(surv_data$CD68, function(val) {if (val > cutoff) {"high"} else {"low"}}))
-ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Mac_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Mac_status, data = surv_data), risk.table = TRUE, conf.int = TRUE, pval = TRUE, ylab = "IDFS probability")
 
 
 # Effect of all the immune cells
@@ -633,7 +644,83 @@ ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Immune_cell_cou
 
 
 
+#
+# PLOTTING SUBTYPES VS COUNTS
+#
 
 
+# Transforming dataframe to be plotted
+sample_counts_df$sample_id <- rownames(sample_counts_df)
 
+# Reassigning IM status to negative and positive
+sample_counts_df$IM_status <- sapply(sample_counts_df$IM_status, function(val) {
+  if (is.na(val)) {"NA"} 
+  else if (val==1) {"Positive"}
+  else {"Negative"}
+})
+
+# Gather the dataframe
+sample_dataframe_long <- sample_counts_df %>% 
+  gather(key = "Phenotype", value = "Count", c(1:8,))
+
+# Defining order for plotting
+lehman_7_order <- c("IM", "MSL", "BL1", "BL2", "LAR", "M", "UNS")
+lehman_4_order <- c("BL1", "BL2", "LAR", "M")
+im_status_order <- c("Negative", "Positive")
+phenotype_order <- c("PAN.CK", "Other", "CD4", "CD8", "CD68", "CD20", "CD4_FOXP3", "CD8_FOXP3")
+
+sample_dataframe_long$Lehman_7 <- factor(sample_dataframe_long$Lehman_7, levels = lehman_7_order)
+sample_dataframe_long$Lehman_4 <- factor(sample_dataframe_long$Lehman_4, levels = lehman_4_order)
+sample_dataframe_long$IM_status <- factor(sample_dataframe_long$IM_status, levels = im_status_order)
+sample_dataframe_long$Phenotype <- factor(sample_dataframe_long$Phenotype, levels = phenotype_order)
+
+
+# Lehman 7
+ggplot(data=na.omit(sample_dataframe_long), aes(x=as.factor(Lehman_7), y=log(Count + 1), fill=as.factor(Phenotype))) +
+  geom_boxplot() +
+  labs(x="Lehman original subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
+# Lehman 4
+ggplot(data=na.omit(sample_dataframe_long), aes(x=as.factor(Lehman_4), y=log(Count + 1), fill=as.factor(Phenotype))) +
+  geom_boxplot() +
+  labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
+# IM status
+ggplot(data=na.omit(sample_dataframe_long), aes(x=as.factor(IM_status), y=log(Count + 1) , fill=as.factor(Phenotype))) +
+  geom_boxplot() +
+  labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
+# IM status
+ggplot(data=na.omit(sample_counts_df), aes(x=as.factor(IM_status), y=log(CD8_FOXP3))) +
+  geom_violin() +
+  geom_boxplot(aes(width=0.6)) +
+  labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
+
+#
+# Plotting cibersort fractions VS groups
+#
+
+
+# Getting data of interest from annotation file
+data_of_interest <- na.omit(annotation_file[,c("TNBCtype_IMpositive", "TNBCtype4_n235_notPreCentered", "CibersortX.Tcell", "CibersortX.Bcell", "CibersortX.macrophage")])
+data_of_interest$TNBCtype_IMpositive <- sapply(data_of_interest$TNBCtype_IMpositive, function(val) {if (val==0) {"Negative"} else if (val==1) {"Positive"}})
+
+data_of_interest <- gather(data_of_interest, key = "Cibersort", value = "Fraction", c(3,4,5))
+
+
+ggplot(data_of_interest, aes(x=TNBCtype4_n235_notPreCentered, y=as.numeric(Fraction), fill=Cibersort)) +
+  geom_boxplot() +
+  labs(x="Lehman refined subtypes", y="Cibersort fraction") +
+  theme_classic()
+
+
+ggplot(data_of_interest, aes(x=as.factor(TNBCtype_IMpositive), y=as.numeric(Fraction), fill=Cibersort)) +
+  geom_boxplot() +
+  labs(x="IM status", y="Cibersort fraction") +
+  theme_classic()
 
