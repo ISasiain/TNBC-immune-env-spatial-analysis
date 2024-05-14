@@ -133,7 +133,7 @@ distances_summary <- as.data.frame(matrix(nrow=7, ncol=length(phenotype_combinat
 colnames(distances_summary) <- phenotype_combinations
 rownames(distances_summary) <- c("All samples", 
                                  "IM +", "IM -",
-                                 "BL1", "BL2", "LAR", "M")
+                                 "BL1", "BL2", "LAR", "Refined Lehman: M")
 
 # Original_values
 distances_summary["All samples",] <- sapply(phenotype_combinations, function(combination) {
@@ -242,13 +242,12 @@ distances_summary["M",] <- sapply(phenotype_combinations, function(combination) 
 #
 
 # Defining row groups
-grouping_rows <- c("All", "IM status", "IM status", "Refined subtypes", "Refined subtypes", "Refined subtypes", "Refined subtypes")
+grouping_rows <- c("IM status", "IM status", "Refined subtypes", "Refined subtypes", "Refined subtypes", "Refined subtypes")
 grouping_cols <- factor(c(rep("CD8",7), rep("CD4",7), rep("CD20",7), rep("CD68",7), rep("CD4_FOXP3",7), rep("CD8_FOXP3",7), rep("PAN-CK",7), rep("Other",7)), levels = c("CD8", "CD4", "CD20", "CD68", "CD4_FOXP3", "CD8_FOXP3", "PAN-CK", "Other"))
 
-Heatmap(scale(distances_summary),
+Heatmap(scale(distances_summary[rownames(distances_summary)[2:length(rownames(distances_summary))],], center = distances_summary["All samples",]),
         name ="Scaled median AMD",
-        row_order = rownames(distances_summary),
+        row_order = rownames(distances_summary)[2:length(rownames(distances_summary))],
         column_order = colnames(distances_summary),
         row_split = grouping_rows,
         column_split = grouping_cols)
-
