@@ -18,9 +18,6 @@ if (!require("ggplot2", quietly = TRUE))
   install.packages("ggplot2")
 library(ggplot2)
 
-if (!require("stats", quietly = TRUE))
-  install.packages("stats")
-library(stats)
 
 if (!require("fpc", quietly = TRUE))
   install.packages("fpc")
@@ -30,20 +27,33 @@ if (!require("NbClust", quietly = TRUE))
   install.packages("NbClust")
 library(NbClust)
 
-if (!require("alphahull", quietly = TRUE))
-  install.packages("alphahull")
-library(alphahull)
+if (!require("tidyr", quietly = TRUE))
+  install.packages("tidyr")
+library(tidyr)
 
-#
-# READING THE SPE OBJECT TO ANALYSE
-#
+
+
 
 
 #Reading spe
-spe_path <- "./data_from_suze/data/spiat/PD31028a_BLOCK_3|L4_spiat.rds"
+spe_path <- "./data_from_suze/data/spiat/PD31171a_BLOCK_1|J10_spiat.rds"
+
 my_spe <- readRDS(spe_path)
 
 
+# Plotting core
+# Define color palette
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
+
+ggplot( data = spatialCoords(my_spe), aes(x=Cell.X.Position, y=abs(3000-Cell.Y.Position),)) +
+  geom_point(aes(col=my_spe$Phenotype), cex=0.75) +
+  labs(x="X coordinate", y="Y coordinate", col="Phenotype") +
+  scale_color_manual(values = cbPalette) + # Use defined color palette
+  theme_classic()
+
+min(spatialCoords(my_spe)[,"Cell.Y.Position"])
 
 #Generating matrix to store the values
 
@@ -101,66 +111,65 @@ for (cell_type in unique(my_spe$"Cell.Type")) {
   )
 }
 
-
+plot(density(values_for_clustering[,"CD20"]))
+plot(density(values_for_clustering[,"CD8"]))
+plot(density(values_for_clustering[,"CD3"]))
+plot(density(values_for_clustering[,"p53"]))
 
 #
-# DETERMINING CELL CLUSTERS BASED ON THE VADENSITY VALUES
+# DETERMINING CELL CLUSTERS BASED ON THE DENSITY VALUES
 #
 
 # Using K means clustering
 
 #NbClust only accepts a minimum number of two clusters
-optimal_clusters <- NbClust(values_for_clustering[,-c(1,2)], method = "kmeans")
-optimal_clusters2 <- kmeans(values_for_clustering[,-c(1,2)], centers = 3)
-mean(as.vector(dist(optimal_clusters2$centers)))
+optimal_clusters <- NbClust(values_for_clustering[,-c(1,2)], method = "kmeans", max.nc = 5)
 
-
-#If the number of clusters is set to be 2, check the number of cluster
-
-#Determining optimal number of clusters
-#optimal_clusters <- clusGap(values_for_clustering[,-c(1,2)],
-#                            FUN = kmeans,
-#                            K.max = 15)
-
-#fviz_gap_stat(optimal_clusters)
-
-#get_number_of_clusters <- function(clusGap_results) {
-  
-#  for (row in 1:(nrow(clusGap_results$Tab)-1)) {
-    
-#    if (clusGap_results$Tab[row,"gap"] >= (clusGap_results$Tab[row+1,"gap"]-clusGap_results$Tab[row+1,"SE.sim"])) {
-    
-#      return(row)
-#      break
-#    }}
-    
-#    print("No optimal number of clusters has been  detected. 1 cluster is assumed.")
-#    return(1)
-  
-#}
-
-#Determine number of clusters
-#cl_num <- get_number_of_clusters(clusGap_results = optimal_clusters)
-
-#Generate clusters
-#clustering <- kmeans(values_for_clustering[,-c(1,2)], centers = cl_num)
 
 #Plotting identified clusters
 clusters_plot <- ggplot(
   as.data.frame(values_for_clustering), 
-  aes(x = X_coor, y = Y_coor, colour=as.factor(optimal_clusters2$cluster))) +
-  geom_point() +
-  labs(color = "Clusters") +
+  aes(x = X_coor, y = abs(3000-Y_coor), colour=as.factor(optimal_clusters$Best.partition))) +
+  geom_point(cex=0.75) +
+  labs(x="X coordinate", y="Y coordinate", color = "Clusters")+
+  scale_color_manual(values = cbPalette) + # Use defined color palette
   theme_classic()
 
 clusters_plot
-plot_cell_categories(my_spe, categories_of_interest = c("CD3", "p53", "CD20", "CD8"), colour=c("red", "grey", "green", "blue"))
+
+#Plotting boxplots of the densities of the identified cell neighbourhoods
+
+cl1 <- as.data.frame(values_for_clustering[optimal_clusters$Best.partition==1, c(3,4,5,6)])
+cl1$Cell <- rownames(cl1)
+cl1 <- cl1 %>% gather(key = "Marker", value = "DIN" , 1:4)
 
 
-par(mfrow = c(2, 1))
-boxplot(as.data.frame(values_for_clustering[optimal_clusters2$cluster==1, c(3,4,5,6)]), ylim=c(0,0.0014))
-boxplot(as.data.frame(values_for_clustering[optimal_clusters2$cluster==2, c(3,4,5,6)]), ylim=c(0,0.0014))
-boxplot(as.data.frame(values_for_clustering[optimal_clusters2$cluster==3, c(3,4,5,6)]), ylim=c(0,0.0014))
+cl2 <- as.data.frame(values_for_clustering[optimal_clusters$Best.partition==2, c(3,4,5,6)])
+cl2$Cell <- rownames(cl2)
+cl2 <- cl2 %>% gather(key = "Marker", value = "DIN" , 1:4)
+
+cl3 <- as.data.frame(values_for_clustering[optimal_clusters$Best.partition==3, c(3,4,5,6)])
+cl3$Cell <- rownames(cl3)
+cl3 <- cl3 %>% gather(key = "Marker", value = "DIN" , 1:4)
+
+
+
+ggplot(data=cl1, aes(x=Marker, y=DIN)) +
+  geom_boxplot(aes(fill=Marker)) +
+  scale_fill_manual(values = cbPalette) + # Use defined color palette
+  theme_classic()
+
+ggplot(data=cl2, aes(x=Marker, y=DIN)) +
+  geom_boxplot(aes(fill=Marker)) +
+  scale_fill_manual(values = cbPalette) + # Use defined color palette
+  theme_classic()
+
+ggplot(data=cl3, aes(x=Marker, y=DIN)) +
+  geom_boxplot(aes(fill=Marker)) +
+  scale_fill_manual(values = cbPalette) + # Use defined color palett
+  theme_classic()
+
+
 
 #Generate stacked box plot of cell counts of each cluster
 clusters <- sort(unique(unname(optimal_clusters$Best.partition)))
@@ -183,12 +192,16 @@ df_to_plot$Counts <- as.numeric(df_to_plot$Counts)
 
 #Stacked barplot of counts
 ggplot(df_to_plot, aes(fill=Cells, y=Counts, x=Clusters)) + 
-  geom_bar(position="stack", stat="identity")
+  geom_bar(position="stack", stat="identity") +
+  scale_fill_manual(values = cbPalette) + # Use defined color palett
+  theme_classic()
 
 #Stacked barplot of proportions
 ggplot(df_to_plot, aes(fill=Cells, y=Counts, x=Clusters)) + 
   geom_bar(position="fill", stat="identity") +
-  ylab("Cell proportions")
+  scale_fill_manual(values = cbPalette) + # Use defined color palett
+  ylab("Cell proportions") +
+  theme_classic()
 
 #Calculating attraction of each cell type.
 
@@ -224,7 +237,7 @@ CD3_attraction_plot <- ggplot(
   geom_point() +
   labs(color = "Attraction value") +
   theme_classic() +
-  scale_color_gradient(low = "grey", high = "red", limits = c(0,25))
+  scale_color_gradient(low = "grey", high = "red", limits = c(0,5))
 
 CD8_attraction_plot <- ggplot(
   as.data.frame(attraction_values), 
@@ -232,7 +245,7 @@ CD8_attraction_plot <- ggplot(
   geom_point() +
   labs(color = "Attraction value") +
   theme_classic()  +
-  scale_color_gradient(low = "grey", high = "red", limits = c(0,25))
+  scale_color_gradient(low = "grey", high = "red", limits = c(0,5))
 
 CD20_attraction_plot <- ggplot(
   as.data.frame(attraction_values), 
@@ -240,7 +253,7 @@ CD20_attraction_plot <- ggplot(
   geom_point() +
   labs(color = "Attraction value") +
   theme_classic() +
-  scale_color_gradient(low = "grey", high = "red", limits = c(0,25))
+  scale_color_gradient(low = "grey", high = "red", limits = c(0,5))
 
 CD3_attraction_plot
 CD8_attraction_plot
@@ -248,9 +261,9 @@ CD20_attraction_plot
 p53_attraction_plot
 
 #Generating boxplots for the atraction values of each detected cluster
-boxplot(as.data.frame(attraction_values[optimal_clusters$Best.partition==1, c(3,4,5,6)]), ylim=c(0,29))
-boxplot(as.data.frame(attraction_values[optimal_clusters$Best.partition==2, c(3,4,5,6)]), ylim=c(0,29))
-boxplot(as.data.frame(attraction_values[optimal_clusters$Best.partition==3, c(3,4,5,6)]), ylim=c(0,29))
+boxplot(as.data.frame(attraction_values[optimal_clusters1$Best.partition==1, c(3,4,5,6)]), ylim=c(0,29))
+boxplot(as.data.frame(attraction_values[optimal_clusters1$Best.partition==2, c(3,4,5,6)]), ylim=c(0,29))
+boxplot(as.data.frame(attraction_values[optimal_clusters1$Best.partition==3, c(3,4,5,6)]), ylim=c(0,29))
 
 
 a <- ashape(values_for_clustering[optimal_clusters$Best.partition==1,c(1, 2)], alpha=40)
