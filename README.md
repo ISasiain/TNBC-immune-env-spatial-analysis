@@ -121,8 +121,9 @@ files=$(find /media/isc/Data1/PhenoImager_cores/SCAN-B_TNBC_TMA_1A/*]_component_
 # Running cell segmentation and phenotyping
 python segmentation_and_phenotyping.py -p ${files::-1} -o ./media/isc/Data1/Processed_cores/SCAN-B_TNBC_TMA_1A/;
 ```
+2. Comparing results with TMArQ processed data.
 
-2. Transforming results into SPE objects
+3. Transforming results into SPE objects
 
 ```bash
 # Transforming files from every slide into spe objects. 
@@ -133,7 +134,7 @@ for block in ${blocks[@]};
     done;
 ```
 
-3. Clustering analysis.
+4. Clustering analysis.
 
 ```bash
 # Calculating DIN matrices per core
@@ -142,10 +143,12 @@ spes=$(find ../spe_objects/* | tr "\n" ";");
 Rscript ../../../scripts/DIN_calculator.r -o ${spes} -g FALSE -r 100 -n r75_all_markers -c 33;
 
 # Clustering cores
-Rscript ../../../scripts/clustering.r -t PAN-CK -d ../DIN_matrices/r100_all_markers.rds -m PAN-CK,CD4,CD8,CD20 -a CD4_FOXP3,CD8_FOXP3,Other -c 33 -n r75_all_marker_clusters;
+Rscript ../../../scripts/clustering.r -t PAN-CK -d ../DIN_matrices/r100_all_markers.rds -m PAN-CK,CD4,CD8,CD20 -a CD4_FOXP3,CD8_FOXP3,Other -c 33 -n r100_all_marker_clusters;
 ```
 
-* Analysing determined spatial thresholds
+5. Analysing counts vs annotations and identified clusters
+
+6. Analysing cell-to-cell distances vs subgroups
 
 
 
@@ -232,5 +235,3 @@ for num in ${thresholds[@]};
     done;
 
 ```
-
-### ANALYSING OF VECTRA VERIS MULTIPLEX IHC DATA
