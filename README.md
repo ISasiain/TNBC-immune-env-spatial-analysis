@@ -7,15 +7,20 @@
 
 ### SUMMARY
 
-This GitHub repository contains the scripts used and workflow followed for the completion of the "Spatial analysis of the Tumour immune microenvironment in Triple-Negative Breast Cancer" master's thesis (Master's degree in Bioinformatics, Lund UNiversity). This thesis consists of the analysis of both single-plex IHC images and multiplex IHC images using already existing computational tools such as TMArQ, or spatial data analysis tools such as SPIAT, and other generated new methods. 
+This GitHub repository contains the scripts used and workflow followed for the completion of the "Spatial analysis of the Tumour immune microenvironment in Triple-Negative Breast Cancer" master's thesis (Master's degree in Bioinformatics, Lund University). This thesis consists of the analysis of both single-plex IHC images and multiplex IHC images using already existing computational tools such as TMArQ, or spatial data analysis tools such as SPIAT, and other generated new methods. 
 
 ### SCRIPTS
 
 The main scripts included and used for this project are the following: 
 
-* **create_spe_objects.r**. This script transform the output produced by TMArQ into Spatial Experiment objects for them to be compatible with spatianl analysis tools such as SPIAT.
-* **spe_objects_from_vectra.r**. This script generates SPE objects from the output of the mIHC cell segmentation and phenoyping script designed for PhenoImager (Vectra Polaris) images.
-* **segmentation_and_phenotyping.py**. This script performs annotation-free cell segmentation and phenotyoing for PhenoImager mIHC images.
+* **create_spe_objects.r**. This R script transform the output produced by TMArQ into Spatial Experiment objects for them to be compatible with spatianl analysis tools such as SPIAT.
+* **spe_objects_from_vectra.r**. This R script generates SPE objects from the output of the mIHC cell segmentation and phenoyping script designed for PhenoImager (Vectra Polaris) images.
+* **segmentation_and_phenotyping.py**. This Python script performs annotation-free cell segmentation and phenotyoing for PhenoImager mIHC images.
+* **clustering.r**. This R script perform cell environment detection and phenotyping based on the DIN values determined from every mIHC or sIHC cores.
+* **DIN_calculator.r**. This R script calculates Density In the Neighbourhood (DIN) matrices for every core (SPE object) to be used to identify cell environments using the clustering.r script.
+* **compare_counts_with_annotations.r**. This R script compares the output (cell counts) generated from the segmented and phenotyed PhenoIMager mIHC images with the sample annotations, analysing survival, counts per subtype, TILs, pathologist's B cell scores, etc. and generating plots.
+* **comparing_counts.r**. This R script compares the counts obtained using the designed cell segmentation and phenotyping approach with the values obtained by TMArQ.
+* **cell_counter.r**. This R script generates a summary dataframe with the cell counts detected per core in each of the TMAs analysed.
 
 ### EXPERIMENTAL PROCEDURE
 
