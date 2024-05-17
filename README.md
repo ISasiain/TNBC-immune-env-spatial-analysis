@@ -21,6 +21,7 @@ The main scripts included and used for this project are the following:
 * **compare_counts_with_annotations.r**. This R script compares the output (cell counts) generated from the segmented and phenotyed PhenoIMager mIHC images with the sample annotations, analysing survival, counts per subtype, TILs, pathologist's B cell scores, etc. and generating plots.
 * **comparing_counts.r**. This R script compares the counts obtained using the designed cell segmentation and phenotyping approach with the values obtained by TMArQ.
 * **cell_counter.r**. This R script generates a summary dataframe with the cell counts detected per core in each of the TMAs analysed.
+* **analyse_sIHC_clusters.r**. This script analyses the composition of the detected sIHC envoironmnets.
 
 ### EXPERIMENTAL PROCEDURE
 
