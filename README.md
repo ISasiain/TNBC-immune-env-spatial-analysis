@@ -149,12 +149,11 @@ Rscript ../../../scripts/clustering.r -t PAN-CK -d ../DIN_matrices/r100_all_mark
 
 5. Analysing counts vs annotations and identified clusters
 
+> This section was performed using the compare_counts_with_annotations.r script.
+
 6. Analysing cell-to-cell distances vs subgroups
 
-
-
-
-
+> This section was performed using the spatial_metrics_SPIAT.r script.
 
 
 
