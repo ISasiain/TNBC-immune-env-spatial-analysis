@@ -11,6 +11,12 @@ This GitHub repository contains the scripts used and workflow followed for the c
 
 ### SCRIPTS
 
+The main scripts included and used for this project are the following: 
+
+* **create_spe_objects.r**. This script transform the output produced by TMArQ into Spatial Experiment objects for them to be compatible with spatianl analysis tools such as SPIAT.
+* **spe_objects_from_vectra.r**. This script generates SPE objects from the output of the mIHC cell segmentation and phenoyping script designed for PhenoImager (Vectra Polaris) images.
+* **segmentation_and_phenotyping.py**. This script performs annotation-free cell segmentation and phenotyoing for PhenoImager mIHC images.
+
 ### EXPERIMENTAL PROCEDURE
 
 #### Analysing TMArQ processed sIHC data
