@@ -2,4 +2,4 @@
 *.RData
 *.rds
 *.csv
-./ignore/*
+/home/isc/Spatial_immune_env/Spatial_immune_env_analysis/ignore/*
