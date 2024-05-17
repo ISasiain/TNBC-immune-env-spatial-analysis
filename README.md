@@ -1,12 +1,13 @@
 # Spatial analysis of the tumour immune microenvironment in Triple-Negative Breast Cancer
 
 * Author: Iñaki Sasiain Casado (inaki.sasiain_casado@med.lu.se)
-* Supervisors: Johan Staaf and Suze Roostee
+* Supervisors: Johan Staaf and Suze Julia Roostee
 * Master's Programme in Bioinformatics
 * BINP 51 (45 ECTS)
 
+### SUMMARY
 
-### WORKFLOW
+This GitHub repository contains the scripts used and workflow followed for the completion of the "Spatial analysis of the Tumour immune microenvironment in Triple-Negative Breast Cancer" master's thesis (Master's degree in Bioinformatics, Lund UNiversity). This thesis consists of the analysis of both single-plex IHC images and multiplex IHC images using already existing computational tools such as TMArQ, or spatial data analysis tools such as SPIAT, and other generated new methods. 
 
 ### SCRIPTS
 
