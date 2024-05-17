@@ -682,7 +682,7 @@ ggplot(data=na.omit(sample_dataframe_long), aes(x=as.factor(Lehman_7), y=log(Cou
   theme_classic()
 
 # Lehman 4
-ggplot(data=na.omit(sample_dataframe_long), aes(x=as.factor(Lehman_4), y=log(Count + 1), fill=as.factor(Phenotype))) +
+ggplot(data=na.omit(sample_dataframe_long), aes(x=as.factor(Lehman_4), y=Count, fill=as.factor(Phenotype))) +
   geom_boxplot() +
   labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
   theme_classic()
