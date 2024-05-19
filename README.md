@@ -104,11 +104,7 @@ nohup Rscript ../../scripts/clustering.r -d ../DIN/r100_DIN_sIHC.rds -m p53,CD3,
 
 3. Analysing results. Generating plots
 
-```bash
-cd ../getting_plots;
-
-Rscript ../../scripts/clustering_analysis.r -d ../DIN/r100_DIN_sIHC.rds -c ../detected_clusters/r100_DIN_sIHC_clusters.rds -s ../detected_clusters/r100_DIN_sIHC_clusters_clustered_cells.rds -n ../../annotation/supplData_withimages.csv -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -o test;
-```
+> This section was performed using the analyse_sIHC_clusters.r R script
 
 
 #### Analysing PhenoImager mIHC images
@@ -154,84 +150,3 @@ Rscript ../../../scripts/clustering.r -t PAN-CK -d ../DIN_matrices/r100_all_mark
 6. Analysing cell-to-cell distances vs subgroups
 
 > This section was performed using the spatial_metrics_SPIAT.r script.
-
-
-
-
-
-
-
-
-
-
-
-
-
-2. Preliminary data analysis
-
-* TILs and survival
-
-
-* Counts and survival
-
-
-
-
-3. Analysing metrics in Basal or NonBasal TNBC
-
-* Counts, distances and densities
-
-4. Anaysing clustering
-
-- Generating DIN matrices for every sample
-
-```bash
-cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/DIN; 
-
-#Create a variable with the comma separated paths to spe objects
-spe_paths=$(find ../../spe_objects/* | tr "\n" ";");
-
-#Generating DIN matrices for all the samples. Using 75 pixels as the radius
-Rscript ../../scripts/DIN_calculator.r -c 33 -o ${spe_paths::-1} -r 75 -n r75_DIN;
-
-# Determining and annotating clusters
-rscript ../../scripts/clustering.r -d ../DIN/r75_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD68,FOXP3 -c 30 -t p53 -n r75_clusters;
-
-
-
-
-
-
-#Identifying cell clusters
-cd /home/Illumina/Iñaki_Sasiain/immune_spatial/analyse_clusters/detected_clusters;
-nohup Rscript ../../scripts/cluster_detector.r -d ../DIN/all_samples_DIN.rds -c 40 -m p53,CD3,CD20,CD8;
-
-#Preliminary analysis of cell cluster density
-cd ../analyse_clustering/;
-Rscript ../../scripts/analyse_denisty_clusters.r -d ../DIN/all_samples_DIN.rds -l ../detected_clusters/optimal_clusters.rds -a p53,CD3,CD4,CD68,CD8,FOXP3,CD20,H2AXp,CKPAN -n ../../annotation/supplData_withimages.csv;
-
-#Cluster annotation
-Rscript ../../scripts/cluster_classificator.r -d ../DIN/all_samples_DIN.rds -l ../detected_clusters/optimal_clusters.rds -u p53,CD3,CD20,CD8 -n ../../annotation/supplData_withimages.csv -a H2AXp,CKPAN,CD4,CD68,FOXP3;
-
-
-
-
-# Merging the scripts in a single one.
-nohup Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8,CD4 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 30;
-
-# Comparing the effect of the homogenity cutoff
-thresholds=(0.9 1 1.1 1.2 1.3 1.4 1.5)
-
-for num in ${thresholds[@]}; 
-    do Rscript ../../scripts/clustering.r -d ../DIN/all_samples_DIN.rds -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -c 40 -M ${num} -n ${num}_cutoff.clustering;
-    done;
-
-
-# Analysing results
-thresholds=(0.9 1 1.1 1.2 1.3 1.4 1.5)
-
-for num in ${thresholds[@]}; 
-    do Rscript ../../scripts/clustering_analysis.r -d ../DIN/all_samples_DIN.rds -c optimal_clusters.rds -s ${num}_cutoff.clustering.rds -n ../../annotation/supplData_withimages.csv -m p53,CD3,CD20,CD8 -a H2AXp,CKPAN,CD4,CD68,FOXP3 -o ${num};
-    done;
-
-```
