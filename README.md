@@ -118,11 +118,17 @@ files=$(find /media/isc/Data1/PhenoImager_cores/SCAN-B_TNBC_TMA_1A/*]_component_
 # Running cell segmentation and phenotyping
 python segmentation_and_phenotyping.py -p ${files::-1} -o ./media/isc/Data1/Processed_cores/SCAN-B_TNBC_TMA_1A/;
 ```
-2. Comparing results with TMArQ processed data.
+
+2. Obtaining cell count matrices for each core.
+
+> This section was done using the cell_counter.r R script.
+
+
+3. Comparing results with TMArQ processed data.
 
 > This section was performed using the comparing_counts.r R script.
 
-3. Transforming results into SPE objects
+4. Transforming results into SPE objects
 
 ```bash
 # Transforming files from every slide into spe objects. 
@@ -133,7 +139,7 @@ for block in ${blocks[@]};
     done;
 ```
 
-4. Clustering analysis.
+5. Clustering analysis.
 
 ```bash
 # Calculating DIN matrices per core
@@ -145,10 +151,10 @@ Rscript ../../../scripts/DIN_calculator.r -o ${spes} -g FALSE -r 100 -n r75_all_
 Rscript ../../../scripts/clustering.r -t PAN-CK -d ../DIN_matrices/r100_all_markers.rds -m PAN-CK,CD4,CD8,CD20 -a CD4_FOXP3,CD8_FOXP3,Other -c 33 -n r100_all_marker_clusters;
 ```
 
-5. Analysing counts vs annotations and identified clusters
+6. Analysing counts vs annotations and identified clusters
 
 > This section was performed using the compare_counts_with_annotations.r script.
 
-6. Analysing cell-to-cell distances vs subgroups
+7. Analysing cell-to-cell distances vs subgroups
 
 > This section was performed using the spatial_metrics_SPIAT.r script.
