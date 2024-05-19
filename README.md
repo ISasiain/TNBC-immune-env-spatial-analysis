@@ -120,6 +120,8 @@ python segmentation_and_phenotyping.py -p ${files::-1} -o ./media/isc/Data1/Proc
 ```
 2. Comparing results with TMArQ processed data.
 
+> This section was performed using the comparing_counts.r R script.
+
 3. Transforming results into SPE objects
 
 ```bash
