@@ -1,5 +1,14 @@
 #!/usr/bin/env Rscript
 
+ # Description. This script generates spe objects from the phenotyped Vectra images.
+ #
+ # Usage. spe_objects_from_vectra.r -m [comma separated list] -i [path] -o [path]
+ #
+ # Arguments: -i [path] Path of the directory containing the coordinate files of each marker and sample.
+ #            -m [comma separated list] Comma separated list of the markers to analyse.
+ #            -o [path] Path of the directory to the file in which the output files will be stored.
+ # Output: spe objects in the output directory.
+
 #
 # Loading required libraries
 #
@@ -94,5 +103,3 @@ for (file_path in files_vector) {
 }
 
 cat ("\n\nAll files have been generated successfully.\n")
-
-
