@@ -1,5 +1,16 @@
 #!/usr/bin/env Rscript
 
+# Description. This script compares the obtained PhenoImager counts with the 
+#              whole slice and cluster annotations and generates several plots.
+#
+# Usage. The location of the input files (lines 18-28) should be changed in 
+#        order to work with different data
+
+
+#
+# LOADING REQUIRED LIBRARUES
+#
+
 library(ggplot2)
 library(ggpubr)
 library(tidyr)
@@ -7,6 +18,11 @@ library(ComplexHeatmap)
 library(survivalAnalysis)
 library(survival)
 library(survminer)
+
+
+#
+# READING INPUT FILES
+#
 
 mIHC_counts1 <- read.csv("/home/isc/Spatial_immune_env/vectra/segmentation_and_phenotyping/cell_counts/cell_count_1_dataframe.csv")
 mIHC_counts2 <- read.csv("/home/isc/Spatial_immune_env/vectra/segmentation_and_phenotyping/cell_counts/cell_count_2_dataframe.csv")
@@ -20,6 +36,7 @@ mIHC_counts <- rbind(mIHC_counts1, mIHC_counts2, mIHC_counts3, mIHC_counts4, mIH
 
 annotation_file <- read.csv2("/home/isc/Spatial_immune_env/data_from_suze/data/supplData_withimages.csv")
 rownames(annotation_file) <- annotation_file$uid
+
 
 #
 # COMPARING CELL COUNTS WITH RNAseq DATA
@@ -70,7 +87,7 @@ ggplot(data=data.frame(vector_of_counts, vector_of_mRNAseq), aes(x=log(vector_of
   theme_classic()
 
 #
-# CD20 VS PATHOLOGIST
+# CD20 COUNTS VS PATHOLOGIST SCORES
 #
 
 # Vector of CD20 paths
@@ -97,8 +114,10 @@ ggplot(data=na.omit(data.frame(vector_of_counts, vector_of_CD20_path)), aes(x=ve
   stat_compare_means(pairwise_res, comparisons = my_comparison, size=7) +
   theme_classic()
 
-        
 
+#
+# CELL COUNTS VS SURVIVAL (CORES)
+#
 
 # Analysing the effect of cell counts in survival
 
@@ -114,27 +133,27 @@ tils <- annotation_file[mIHC_counts$TMArQ_CORE_ID, "TILs"]
 
 # Combine into a data frame
 surv_data <- data.frame(time = as.numeric(time), status = status,
-                         TILs = as.numeric(tils),
-                         PAN.CK = log(mIHC_counts$PAN.CK  +1),
-                         CD8 = log(mIHC_counts$CD8 +1),
-                         CD4 = log(mIHC_counts$CD4 +1),
-                         CD20 = log(mIHC_counts$CD20 +1),
-                         CD68 = log(mIHC_counts$CD68 +1),
-                         CD4_FOXP3 = log(mIHC_counts$CD4_FOXP3 +1),
-                         CD8_FOXP3 = log(mIHC_counts$CD8_FOXP3 +1),
-                         Other = log(mIHC_counts$Other +1))
+                        TILs = as.numeric(tils),
+                        PAN.CK = log(mIHC_counts$PAN.CK  +1),
+                        CD8 = log(mIHC_counts$CD8 +1),
+                        CD4 = log(mIHC_counts$CD4 +1),
+                        CD20 = log(mIHC_counts$CD20 +1),
+                        CD68 = log(mIHC_counts$CD68 +1),
+                        CD4_FOXP3 = log(mIHC_counts$CD4_FOXP3 +1),
+                        CD8_FOXP3 = log(mIHC_counts$CD8_FOXP3 +1),
+                        Other = log(mIHC_counts$Other +1))
 
 # Perform survival analysis
 result = survivalAnalysis::analyse_multivariate(data = surv_data,
-                     time_status = c("time", "status"),
-                     covariates = c("TILs","CD8", "CD4", "CD20", "CD68", "CD4_FOXP3", "CD8_FOXP3"))
+                                                time_status = c("time", "status"),
+                                                covariates = c("TILs","CD8", "CD4", "CD20", "CD68", "CD4_FOXP3", "CD8_FOXP3"))
 
 survivalAnalysis::forest_plot(result)
 
 
 #Plotting survival plot of Treg infiltration in high TILs cores
 
-surv_data2 <- surv_data[!is.na(surv_data$TILs) & surv_data$TILs > 30,]                      
+surv_data2 <- surv_data[!is.na(surv_data$TILs) & surv_data$TILs > 0,]                      
 
 # Effect of T cyt
 cutoff <- median(log(mIHC_counts$CD8+1))
@@ -209,15 +228,11 @@ ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Tregcd8_status,
 
 
 
+#
+# CELL COUNTS VS TILs (CORE)
+#
 
-
-ggsurvplot(survival::survfit(Surv(time = time, event = status) ~ Treg_status, data = surv_data2))
-
-summary(surv_data2$Treg_status)
-
-plot(log(mIHC_counts$CD8), log(mIHC_counts$CD))
-
-# Plotting barplot with cell counts
+# Adding TILs to mIHC_counts df
 
 mIHC_counts$TILs <- as.numeric(
   
@@ -264,7 +279,7 @@ for (marker in c("CD20", "CD8", "CD4")) {
           } else if (anno[[core]][["clusters"]][[cluster]][["type"]] == "TUMOUR") {
             
             cls_ls[["Tumour"]] <- c(cls_ls[["Tumour"]], core)
-             
+            
           } else if (anno[[core]][["clusters"]][[cluster]][["type"]] == "MIXED") {
             
             cls_ls[["Mixed"]] <- c(cls_ls[["Mixed"]], core)
@@ -276,9 +291,9 @@ for (marker in c("CD20", "CD8", "CD4")) {
         if (anno[[core]][["class"]][["type"]] == "TUMOUR") {
           
           cls_ls[["Homo_tum"]] <- c(cls_ls[["Homo_tum"]], core)
-        
+          
         } else if (anno[[core]][["class"]][["type"]] == "IMMUNE") {
-        
+          
           cls_ls[["Homo_immune"]] <- c(cls_ls[["Homo_immune"]], core)
           
         }  else if (anno[[core]][["class"]][["type"]] == "MIXED") {
@@ -286,8 +301,8 @@ for (marker in c("CD20", "CD8", "CD4")) {
           cls_ls[["Homo_mixed"]] <- c(cls_ls[["Homo_mixed"]], core)
           
         }
+      }
     }
-  }
   }
 }
 
@@ -359,7 +374,28 @@ p1 + geom_point(aes(x=CORE_ID, y=TILs*100)) +
 
 
 p2 + geom_point(aes(x=CORE_ID, y=1-TILs/100)) +
-     scale_y_continuous(name = "Cell counts",sec.axis = sec_axis(name = "TILs",  ~.*100 - 100))
+  scale_y_continuous(name = "Cell counts",sec.axis = sec_axis(name = "TILs",  ~.*100 - 100))
+
+
+#
+# PLOTTING THE LOCATION OF THE IDENTIFIED CLUSTERS IN THE CORES
+#
+
+# Create the plot
+p1 <- ggplot(data = dataframe_long, aes(x = CORE_ID, fill = Phenotype, y = Count)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_x_discrete(guide = guide_axis(angle = -25)) +
+  xlab("Cores") +
+  theme_classic() +
+  theme(axis.text.x = element_text(size = 0))
+
+# Create the second plot with filled bars
+p2 <- ggplot(data = dataframe_long, aes(x = CORE_ID, fill = Phenotype, y = Count)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_x_discrete(guide = guide_axis(angle = -25)) +
+  xlab("Cores") +
+  theme_classic() +
+  theme(axis.text.x = element_text(size = 0))
 
 
 # Adding annotation. Samples with CD20 immune clusters
@@ -375,8 +411,11 @@ p1 + annotate("segment", x=mIHC_counts[mIHC_counts$CD4_clusters == 1, "CORE_ID"]
 p2 + annotate("segment", x=mIHC_counts[mIHC_counts$CD4_clusters == 1, "CORE_ID"], xend = mIHC_counts[mIHC_counts$CD4_clusters == 1, "CORE_ID"], y =-0.04, yend = 0, arrow = arrow(length = unit(0.06, "inches"), type = "closed"))
 
 
-# Generating heatmap
+#
+# PLOTTING HEATMAP OF LOG COUNTS PER CORE VS ANNOTATIONS
+#
 
+# Adding annotations to miHC_cpunts files
 mIHC_counts$TILs <- as.numeric(annotation_file[mIHC_counts$TMArQ_CORE_ID, "TILs"])
 mIHC_counts$IMstatus <- as.factor(annotation_file[mIHC_counts$TMArQ_CORE_ID, "TNBCtype_IMpositive"])
 mIHC_counts$ASCAT <- as.numeric(annotation_file[mIHC_counts$TMArQ_CORE_ID, "ASCAT_TUM_FRAC"])
@@ -387,11 +426,11 @@ mIHC_counts$subtypes_4 <- as.factor(annotation_file[mIHC_counts$TMArQ_CORE_ID, "
 
 # Merging PAM50 annotations
 mIHC_counts$PAM50 <- sapply(mIHC_counts$PAM50, function(val) {if (is.na(val)) {NA}
-                                                              else if (val=="Basal") {"Basal"} 
-                                                              else if (val == "unclassified") {"Unclassified"}
-                                                              else {"Non Basal"}})
+  else if (val=="Basal") {"Basal"} 
+  else if (val == "unclassified") {"Unclassified"}
+  else {"Non Basal"}})
 
-
+# Generating annotations
 annotations_left <- rowAnnotation(TILs = mIHC_counts$TILs,
                                   HRD_status = mIHC_counts$HRD,
                                   PAM50_subtype = mIHC_counts$PAM50,
@@ -413,16 +452,17 @@ annotations_right <- rowAnnotation(CD8_clusters=mIHC_counts$CD8_clusters,
                                    Homogeneous_mixed=mIHC_counts$HMix_clusters)
 
 
+# PLotting the heatmap
 Heatmap(log(mIHC_counts[,c("CD4", "CD8", "CD20", "CD4_FOXP3", "CD8_FOXP3", "PAN.CK", "Other")]+1),
         name= "Log cell counts",
         left_annotation = annotations_left,
         right_annotation = annotations_right,
         cluster_columns = FALSE,
         show_row_names = FALSE,
-        clustering_distance_rows = "euclidea")
+        clustering_distance_rows = "euclidean")
 
 
-# Combine data from the 2 different cores of the same sample
+
 
 #
 # COMPARING CORE TO CORE COUNTS AND GENERATING DATA POER SAMPLE
@@ -452,13 +492,13 @@ for (phenotype in my_phenotypes) {
     
     # Storing the counts of the cores belomnging to the same sample
     df_of_counts <- na.omit(rbind(df_of_counts, c(log(mIHC_counts[which(mIHC_counts$PDID==sample),][1, phenotype] +1),
-                      log(mIHC_counts[which(mIHC_counts$PDID==sample),][2,phenotype])+1)))
+                                                  log(mIHC_counts[which(mIHC_counts$PDID==sample),][2,phenotype])+1)))
     
     
     # Determining the mean counts for each phenotype and adding it to the dataframe
     #Using na.omit for the cases in whoch there is only a single core per sample
     sample_counts_df[sample, phenotype] <- mean(na.omit(c(mIHC_counts[which(mIHC_counts$PDID==sample),][1,phenotype]),
-                                                          mIHC_counts[which(mIHC_counts$PDID==sample),][2,phenotype]))
+                                                        mIHC_counts[which(mIHC_counts$PDID==sample),][2,phenotype]))
     
   }
   
@@ -471,12 +511,12 @@ correlation_dataframe <- na.omit(correlation_dataframe)
 
 #Plotting Spearman correlations
 ggplot(data=correlation_dataframe, aes(x=as.factor(Phenotype), y=as.numeric(Correlation))) +
-         geom_col() +
-         ylim(0,1) +
-         theme_classic() +
-         labs(x="Cell phenotype", y="Core to core correlation (Spearman)") +
-         theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1),
-               text=element_text(size=12))
+  geom_col() +
+  ylim(0,1) +
+  theme_classic() +
+  labs(x="Cell phenotype", y="Core to core correlation (Spearman)") +
+  theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1),
+        text=element_text(size=12))
 
 
 #Plotting scatterplots of each phenotype
@@ -488,8 +528,8 @@ for (sample in my_samples) {
   points(log(mIHC_counts[which(mIHC_counts$PDID==sample),][1,"CD8"]+1),
          log(mIHC_counts[which(mIHC_counts$PDID==sample),][2,"CD8"]+1),
          pch=16)
-
-
+  
+  
   
 }
 
@@ -691,12 +731,50 @@ ggplot(data=na.omit(sample_dataframe_long), aes(x=as.factor(IM_status), y=log(Co
   labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
   theme_classic()
 
-# IM status
-ggplot(data=na.omit(sample_counts_df), aes(x=as.factor(IM_status), y=log(CD8_FOXP3))) +
-  geom_violin() +
-  geom_boxplot(aes(width=0.6)) +
+# Plotting violin + boxplot of log counts vs IM status`
+
+# IM status CD8
+ggplot(data=na.omit(sample_counts_df), aes(x=as.factor(IM_status), y=log(CD8 +1))) +
+  geom_violin(aes(fill="CD8")) +
+  geom_boxplot(width=0.15) +
   labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
   theme_classic()
+
+# IM status CD4
+ggplot(data=na.omit(sample_counts_df), aes(x=as.factor(IM_status), y=log(CD4 +1))) +
+  geom_violin(aes(fill="CD4")) +
+  geom_boxplot(width=0.15) +
+  labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
+# IM status CD68
+ggplot(data=na.omit(sample_counts_df), aes(x=as.factor(IM_status), y=log(CD68 +1))) +
+  geom_violin(aes(fill="CD68")) +
+  geom_boxplot(width=0.15) +
+  labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
+# IM status CD20
+ggplot(data=na.omit(sample_counts_df), aes(x=as.factor(IM_status), y=log(CD20 +1))) +
+  geom_violin(aes(fill="CD20")) +
+  geom_boxplot(width=0.15) +
+  labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
+# IM status CD4_FOXP3
+ggplot(data=na.omit(sample_counts_df), aes(x=as.factor(IM_status), y=log(CD4_FOXP3 +1))) +
+  geom_violin(aes(fill="CD4_FOXP3")) +
+  geom_boxplot(width=0.15) +
+  labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
+# IM status CD8_FOXP3
+ggplot(data=na.omit(sample_counts_df), aes(x=as.factor(IM_status), y=log(CD8_FOXP3 +1))) +
+  geom_violin(aes(fill="CD8_FOXP3")) +
+  geom_boxplot(width=0.15) +
+  labs(x="Lehman refined subtypes", y="Log cell counts", fill="Cell phenotype") +
+  theme_classic()
+
 
 
 #
@@ -721,4 +799,3 @@ ggplot(data_of_interest, aes(x=as.factor(TNBCtype_IMpositive), y=as.numeric(Frac
   geom_boxplot() +
   labs(x="IM status", y="Cibersort fraction") +
   theme_classic()
-
