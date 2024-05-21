@@ -1,5 +1,18 @@
 #!/usr/bin/Rscript
 
+# Documentation. This script calculates the density in the neighborhood (DIN) of the cells in the analysed samples.
+# 
+# Usage: DIN_calculator.r -o [COMMA_SEPARATED_PATHS] -g [TRUE/FALSE] -t [tumour_marker] -c [NUMBER] -r [NUMBER] -n [OUTPUT_NAME]
+#
+# Arguments: -o, --spe_objects: Semicolon separated spe objects' directories. 
+#            -g, --group_immune_cells: If the immune cells should be grouped in the analysis set this argument to TRUE [default FALSE].
+#            -t, --tumour_phenotypes: Comma separated tumour phenotypes to be used if the immune cells are grouped [default ""].
+#            -c, --cores: Number of cores to be used to run the program [default 1].
+#            -r, --radius: Radius of the neighborhood to calculate the density in the neighborhood (DIN) [default 100].
+#            -n, --output_name: Name of the output file [default all_samples_DIN].
+#
+# oUTPUT: A .rds file with the density in the neighborhood (DIN) values of the analysed samples.
+
 #
 # LOADING THE REQUIRED PACKAGES
 #
