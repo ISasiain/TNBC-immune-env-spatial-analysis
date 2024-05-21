@@ -1,7 +1,7 @@
 # Spatial analysis of the tumour immune microenvironment in Triple-Negative Breast Cancer
 
 * Author: Iñaki Sasiain Casado (inaki.sasiain_casado@med.lu.se)
-* Supervisors: Johan Staaf and Suze Julia Roostee
+* Supervisors: Johan Staaf and Suze Roostee
 * Master's Programme in Bioinformatics
 * BINP 51 (45 ECTS)
 
