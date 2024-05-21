@@ -1,5 +1,20 @@
 #!/usr/bin/Rscript
 
+# Description. This script generates cell clusters based on DIN values.
+# Usage. clustering.r -d [path] -m [comma separated list] -t [name] -l [number] -M [number] -D [number] -c [number] -n [name] -p [path]
+# Arguments: -d [path] The path to the .rds file containing the list of DIN matrices of the analysed samples must be entered here.
+#            -m [comma separated list] A comma separated list of the markers to be used to determine clusters should be entered here.
+#            -a [comma separated list] A comma separated list of the additional markers to analyse (not to define clusters) should be entered here.
+#            -l [number] The maximum number of expected clusters must be entered here.
+#            -t [name] The name of the marker to use as a tumour markers must be entered here.
+#            -M [number] The minimum mean distance between centroids of each sample to take the clustering into account.
+#            -D [number] The minimum cell density in a sample to consider a sample feasible for the analysis.
+#            -c [number] Number of cores to be used to run the program [default 1]
+#            -n [name] Name of the output files [default output_clustering]
+#            -p [path] Path of the output files [default ./]
+# Output: Annotated samples and clustered cells in the output directory.
+
+
 #
 # DOWNLOADING AND LOADING REQUIRED PACKAGES
 #
