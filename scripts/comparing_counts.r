@@ -1,8 +1,19 @@
 #!/usr/bin/env Rscript
 
+# Description. This script compares the TMArQ determined cell counts with the counts determined using the develped pipeline.
+# 
+# Usage. The pathos to the input files should be changed to the correct path.
+
+#
+# LOADING REQUIRED PACKAGES
+#
+
 library(ggplot2)
 library(ComplexHeatmap)
 
+#
+# READING INPUT DATA
+#
 
 mIHC_counts1 <- read.csv("/home/isc/Spatial_immune_env/vectra/segmentation_and_phenotyping/cell_counts/cell_count_1_dataframe.csv")
 mIHC_counts2 <- read.csv("/home/isc/Spatial_immune_env/vectra/segmentation_and_phenotyping/cell_counts/cell_count_2_dataframe.csv")
@@ -18,12 +29,12 @@ mIHC_counts <- rbind(mIHC_counts1, mIHC_counts2, mIHC_counts3, mIHC_counts4, mIH
 rownames(mIHC_counts) = mIHC_counts$CORE_ID
 
 
-
 sIHC_counts <- read.csv2("/home/isc/Spatial_immune_env/data_from_suze/data/supplData_withimages.csv")
 
 # Reading cell counts from TMArQ
 tmarq_counts <- read.table("/home/isc/Spatial_immune_env/vectra/segmentation_and_phenotyping/counts_from_TMArQ/segmentcell_multiplex.txt", header = TRUE)
 
+# Getting the uid from the file name
 tmarq_counts$uid <- sapply(strsplit(tmarq_counts$file, '[][]'), function(element) {if (!is.na(element[2])) 
                                                                                     {paste0("BLOCK_", 
                                                                                       strsplit(element[2], ",")[[1]][1], 
@@ -32,13 +43,9 @@ tmarq_counts$uid <- sapply(strsplit(tmarq_counts$file, '[][]'), function(element
                                                                                       strsplit(element[2], ",")[[1]][2])}
                                                                                    else {NA}})
 
+# Adding counts for each marker
 tmarq_counts$marker <- sapply(strsplit(tmarq_counts$file, '_'), function(element) element[5])
 
-for (element in rownames(mIHC_counts)) {
-  
-cat ("\n", element, ": ", abs(prel_mIHC_counts[element, "PAN.CK"] - mIHC_counts[element, "PAN.CK"]))  
-  
-}
 
 #
 # PRELIMINARY VS FINAL PHENOTYPE
