@@ -1,5 +1,13 @@
 #!/usr/bin/env Rscript
 
+# Description. This script calculates the average minimum distance between the cells of different phenotypes in the analysed samples.
+#
+# Usage. The paths of the files used should be changed to the correct path.
+
+#
+# LOADING REQUIRED LIBRARIES
+#
+
 library(ggplot2)
 library(ComplexHeatmap)
 library(SPIAT)
