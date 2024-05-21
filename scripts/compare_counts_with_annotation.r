@@ -134,7 +134,7 @@ survivalAnalysis::forest_plot(result)
 
 #Plotting survival plot of Treg infiltration in high TILs cores
 
-surv_data2 <- surv_data[!is.na(surv_data$TILs) & surv_data$TILs > 0,]                      
+surv_data2 <- surv_data[!is.na(surv_data$TILs) & surv_data$TILs > 30,]                      
 
 # Effect of T cyt
 cutoff <- median(log(mIHC_counts$CD8+1))
@@ -218,8 +218,6 @@ summary(surv_data2$Treg_status)
 plot(log(mIHC_counts$CD8), log(mIHC_counts$CD))
 
 # Plotting barplot with cell counts
-
-# Determining ratio of immune_cells per tumour cell
 
 mIHC_counts$TILs <- as.numeric(
   
