@@ -11,7 +11,7 @@
 #            -r, --radius: Radius of the neighborhood to calculate the density in the neighborhood (DIN) [default 100].
 #            -n, --output_name: Name of the output file [default all_samples_DIN].
 #
-# oUTPUT: A .rds file with the density in the neighborhood (DIN) values of the analysed samples.
+# Output: A .rds file with the density in the neighborhood (DIN) values of the analysed samples.
 
 #
 # LOADING THE REQUIRED PACKAGES
