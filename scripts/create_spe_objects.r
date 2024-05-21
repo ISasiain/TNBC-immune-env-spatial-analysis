@@ -1,5 +1,12 @@
 #!/usr/bin/Rscript
 
+# Description. This script generates spe objects integrating TMArQ output files;files containing coordenates of different markers.
+# Usage. create_spe_objects.r -m [comma separated list] -a [path] -p [path]
+# Arguments: -m [comma separated list] Comma separated list of the markers to analyse.
+#            -a [path] Path to the annotation file paths containing the files containing each marker's coordinate. Include all the backslashes.
+#            -p [path] Path of the directory containing the coordinate files of each marker and sample.
+# Output: spe objects in the output directory.
+
 #
 # INSTALL AND LOAD PACKAGES IF REQUIRED
 #
