@@ -25,10 +25,10 @@ The main scripts included and used for this project are the following:
 
 ### SETTING UP CONDA ENVIRONMENT
 
-"""
+```bash
 # Create a conda environment that replicates the one used for the original analysis
 conda env create -f spatial_analysis.yml
-"""
+```
 
 ### EXPERIMENTAL PROCEDURE
 

@@ -1,4 +1,4 @@
-name: spatial_analysis
+name: base
 channels:
   - conda-forge
   - bioconda
