@@ -23,6 +23,13 @@ The main scripts included and used for this project are the following:
 * **cell_counter.r**. This R script generates a summary dataframe with the cell counts detected per core in each of the TMAs analysed.
 * **analyse_sIHC_clusters.r**. This script analyses the composition of the detected sIHC envoironmnets.
 
+### SETTING UP CONDA ENVIRONMENT
+
+"""
+# Create a conda environment that replicates the one used for the original analysis
+conda env create -f spatial_analysis.yml
+"""
+
 ### EXPERIMENTAL PROCEDURE
 
 #### Analysing TMArQ processed sIHC data
